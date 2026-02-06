@@ -1,0 +1,73 @@
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --logo-1: #4f58a5;
+  --logo-2: #406fb5;
+  --logo-3: #49a2da;
+  --logo-4: #0e112c;
+  --shape-1: #64a6a5;
+  --shape-2: #388cad;
+  --shape-3: #96c2ce;
+  --shape-4: #2b7286;
+}
+
+html, body {
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+.xp1 {
+  font-family: "Segoe UI Black", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+}
+
+.xp2 {
+  font-family: "Segoe UI Bold", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+}
+
+.xp3 {
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.xp-text {
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+}
+
+/* styles pour moderniser le DataGrid */
+.custom-datagrid .dx-datagrid-headers {
+    background-color: #e0f2fe; /* bleu très clair pour l'en-tête */
+    font-weight: 600;
+    color: #1e3a8a; /* bleu foncé */
+  }
+  
+  .custom-datagrid .dx-datagrid-rowsview .dx-row {
+    background-color: #f9fafb; 
+  }
+  
+  .custom-datagrid .dx-datagrid-rowsview .dx-row:nth-child(even) {
+    background-color: #c7d8e4;  /*#edf1f1*/
+  }
+  
+  /* Supprimer les traits entre les lignes */
+  .custom-datagrid .dx-datagrid-rowsview .dx-data-row {
+    border-bottom: none;
+  }
+  
+  /* Colonnes séparées sans bordures visibles */
+  .custom-datagrid .dx-datagrid-content .dx-row > td {
+    border-left: none;
+    border-right: none;
+  }
+   
+  
+
+
+
