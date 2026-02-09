@@ -285,31 +285,24 @@ export default function RegionsPlanningPage() {
         setChauffeurs(list.map((c: any, i: number) => ({ No: c.No, Name: c.Name + (i % 2 === 0 ? ' (disponible)' : ' (occupé)') })));
       } catch {}
     })();
-    // Load trucks (BC + real-time vehicles)
+    // Load trucks from /api/vehicles (fixed list matching BC data)
     (async () => {
-      let bcTrucks: Truck[] = [];
-      try {
-        const res = await fetch('/api/listeCamions', { cache: 'no-store' });
-        const data = await res.json();
-        const list: any[] = Array.isArray(data?.value) ? data.value : (Array.isArray(data) ? data : []);
-        bcTrucks = list.map((t: any, i: number) => ({ No: t.No, Description: t.Description + (i % 2 === 0 ? ' (disponible)' : ' (entretien)'), License_Plate: t.License_Plate }));
-      } catch {}
-      // Also fetch real-time vehicles
       try {
         const res = await fetch('/api/vehicles', { cache: 'no-store' });
         const data = await res.json();
         const list: any[] = Array.isArray(data) ? data : [];
-        const rtTrucks: Truck[] = list.map((v: any) => ({
-          No: v.vehicle_id || '',
-          Description: v.service_name || v.vehicle_id || '',
-          License_Plate: v.plate_number || v.vehicle_id || '',
-        }));
-        // Merge: BC trucks first, then real-time vehicles not already in BC list
-        const existingNos = new Set(bcTrucks.map(t => t.No));
-        const merged = [...bcTrucks, ...rtTrucks.filter(t => !existingNos.has(t.No))];
-        setTrucks(merged);
+        const truckList: Truck[] = list.map((v: any) => {
+          const status = (v.status || '').trim();
+          const suffix = status ? ` (${status.toLowerCase()})` : '';
+          return {
+            No: v.vehicle_id || '',
+            Description: (v.service_name || v.vehicle_id || '') + suffix,
+            License_Plate: v.plate_number || '',
+          };
+        });
+        setTrucks(truckList);
       } catch {
-        setTrucks(bcTrucks);
+        setTrucks([]);
       }
     })();
   }, [orderDate]);
@@ -805,10 +798,10 @@ export default function RegionsPlanningPage() {
                       .filter(([c, t]) => c !== city && t.vehicle)
                       .map(([_, t]) => t.vehicle);
                     return trucks.filter(tr => {
-                      const label = `${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
+                      const label = `${tr.No} - ${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
                       return !assignedVehicles.includes(label) || tour.vehicle === label;
                     }).map(tr => {
-                      const label = `${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
+                      const label = `${tr.No} - ${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
                       return (
                         <option key={tr.No} value={label}>
                           {label}
