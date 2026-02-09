@@ -182,16 +182,16 @@ export function getMockWhseShipmentLines(sourceNos?: string[]): MockWhseShipment
 
   const lines: MockWhseShipmentLine[] = [];
   const catalog = [
-    { itemNo: "BEV-1001", desc: "Eau minérale 1.5L (pack x6)", uom: "PAC" },
-    { itemNo: "BEV-1020", desc: "Eau gazeuse 1L (pack x6)", uom: "PAC" },
-    { itemNo: "BEV-2003", desc: "Soda cola 33cl (carton x24)", uom: "CTN" },
-    { itemNo: "BEV-2011", desc: "Jus d'orange 1L (carton x12)", uom: "CTN" },
-    { itemNo: "SUP-3007", desc: "Gobelets 20cl (carton x1000)", uom: "CTN" },
-    { itemNo: "SUP-3010", desc: "Glace pilée (sac 10kg)", uom: "SAC" },
+    { itemNo: "1191", desc: "Transport", uom: "PCS" },
+    { itemNo: "1928-S", desc: "Lampe AMSTERDAM", uom: "PCS" },
+    { itemNo: "SP-SCM1011", desc: "Airport Duo", uom: "PCS" },
+    { itemNo: "1079", desc: "Bleu, Taille 32 Plaque PVC", uom: "PCS" },
+    { itemNo: "1210", desc: "Article souscription demo", uom: "PCS" },
+    { itemNo: "1212", desc: "Article vente souscription", uom: "PCS" },
   ];
   for (const o of pick) {
     const docNo = `WHS-${o.No}`;
-    const baseIdx = Math.max(0, catalog.findIndex((c) => c.itemNo === "BEV-1001"));
+    const baseIdx = 0;
     const idx1 = (Number(String(o.No).slice(-1)) || 0) % catalog.length;
     const idx2 = (idx1 + 2) % catalog.length;
     const idx3 = (idx1 + 4) % catalog.length;
