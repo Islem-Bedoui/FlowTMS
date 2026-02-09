@@ -1,11 +1,11 @@
 {
-  "shipmentNo": "FR-2025-001",
-  "createdAt": "2026-02-09T11:29:38.043Z",
-  "updatedAt": "2026-02-09T12:45:04.421Z",
+  "shipmentNo": "FR-2025-025",
+  "createdAt": "2026-02-09T13:09:48.061Z",
+  "updatedAt": "2026-02-09T13:09:48.061Z",
   "values": {
     "palettes": 2,
     "caisses": 3,
-    "bouteilles": 4,
+    "bouteilles": 8,
     "futs": 1,
     "autre": 1
   },

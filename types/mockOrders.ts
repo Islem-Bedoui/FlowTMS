@@ -3,6 +3,7 @@ export const mockOrders = [
   // ── Paris (4 commandes) ──
   {
     No: "FR-2025-001",
+    Sell_to_Customer_Name: "Jean Dupont",
     Sell_to_City: "Paris",
     Sell_to_Address: "10 Rue de Rivoli",
     Sell_to_Post_Code: "75001",
@@ -13,6 +14,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-002",
+    Sell_to_Customer_Name: "Pierre Martin",
     Sell_to_City: "Paris",
     Sell_to_Address: "48 Rue Oberkampf",
     Sell_to_Post_Code: "75011",
@@ -23,6 +25,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-006",
+    Sell_to_Customer_Name: "Marie Dubois",
     Sell_to_City: "Paris",
     Sell_to_Address: "112 Rue de Vaugirard",
     Sell_to_Post_Code: "75015",
@@ -33,6 +36,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-019",
+    Sell_to_Customer_Name: "Sophie Martin",
     Sell_to_City: "Paris",
     Sell_to_Address: "5 Avenue des Champs-Élysées",
     Sell_to_Post_Code: "75008",
@@ -45,6 +49,7 @@ export const mockOrders = [
   // ── Lyon (3 commandes) ──
   {
     No: "FR-2025-003",
+    Sell_to_Customer_Name: "Louis Bernard",
     Sell_to_City: "Lyon",
     Sell_to_Address: "2 Place Bellecour",
     Sell_to_Post_Code: "69002",
@@ -55,6 +60,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-020",
+    Sell_to_Customer_Name: "Claire Bernard",
     Sell_to_City: "Lyon",
     Sell_to_Address: "18 Rue de la République",
     Sell_to_Post_Code: "69001",
@@ -65,6 +71,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-021",
+    Sell_to_Customer_Name: "Nicolas Leroy",
     Sell_to_City: "Lyon",
     Sell_to_Address: "45 Quai Saint-Antoine",
     Sell_to_Post_Code: "69002",
@@ -77,6 +84,7 @@ export const mockOrders = [
   // ── Marseille (3 commandes) ──
   {
     No: "FR-2025-004",
+    Sell_to_Customer_Name: "Julie Petit",
     Sell_to_City: "Marseille",
     Sell_to_Address: "1 Quai du Port",
     Sell_to_Post_Code: "13002",
@@ -87,6 +95,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-005",
+    Sell_to_Customer_Name: "Julien Moreau",
     Sell_to_City: "Marseille",
     Sell_to_Address: "20 La Canebière",
     Sell_to_Post_Code: "13001",
@@ -97,6 +106,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-022",
+    Sell_to_Customer_Name: "Amélie Moreau",
     Sell_to_City: "Marseille",
     Sell_to_Address: "8 Boulevard Longchamp",
     Sell_to_Post_Code: "13001",
@@ -109,6 +119,7 @@ export const mockOrders = [
   // ── Toulouse (3 commandes) ──
   {
     No: "FR-2025-007",
+    Sell_to_Customer_Name: "François Dubois",
     Sell_to_City: "Toulouse",
     Sell_to_Address: "1 Place du Capitole",
     Sell_to_Post_Code: "31000",
@@ -119,6 +130,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-008",
+    Sell_to_Customer_Name: "Camille Leroy",
     Sell_to_City: "Toulouse",
     Sell_to_Address: "30 Allées Jean Jaurès",
     Sell_to_Post_Code: "31000",
@@ -129,6 +141,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-009",
+    Sell_to_Customer_Name: "Antoine Petit",
     Sell_to_City: "Toulouse",
     Sell_to_Address: "15 Rue Alsace-Lorraine",
     Sell_to_Post_Code: "31000",
@@ -141,6 +154,7 @@ export const mockOrders = [
   // ── Nice (3 commandes) ──
   {
     No: "FR-2025-010",
+    Sell_to_Customer_Name: "Élise Dupont",
     Sell_to_City: "Nice",
     Sell_to_Address: "7 Promenade des Anglais",
     Sell_to_Post_Code: "06000",
@@ -151,6 +165,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-011",
+    Sell_to_Customer_Name: "Mathieu Roux",
     Sell_to_City: "Nice",
     Sell_to_Address: "12 Avenue Jean Médecin",
     Sell_to_Post_Code: "06000",
@@ -161,6 +176,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-023",
+    Sell_to_Customer_Name: "Laura Garnier",
     Sell_to_City: "Nice",
     Sell_to_Address: "3 Rue Masséna",
     Sell_to_Post_Code: "06000",
@@ -173,6 +189,7 @@ export const mockOrders = [
   // ── Bordeaux (3 commandes) ──
   {
     No: "FR-2025-012",
+    Sell_to_Customer_Name: "Thomas Garnier",
     Sell_to_City: "Bordeaux",
     Sell_to_Address: "10 Place de la Bourse",
     Sell_to_Post_Code: "33000",
@@ -183,6 +200,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-013",
+    Sell_to_Customer_Name: "Nathalie Lefebvre",
     Sell_to_City: "Bordeaux",
     Sell_to_Address: "55 Rue Sainte-Catherine",
     Sell_to_Post_Code: "33000",
@@ -193,6 +211,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-024",
+    Sell_to_Customer_Name: "Alexandre Lefebvre",
     Sell_to_City: "Bordeaux",
     Sell_to_Address: "22 Quai des Chartrons",
     Sell_to_Post_Code: "33000",
@@ -205,6 +224,7 @@ export const mockOrders = [
   // ── Lille (3 commandes) ──
   {
     No: "FR-2025-014",
+    Sell_to_Customer_Name: "Audrey Roux",
     Sell_to_City: "Lille",
     Sell_to_Address: "2 Place du Général de Gaulle",
     Sell_to_Post_Code: "59000",
@@ -215,6 +235,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-015",
+    Sell_to_Customer_Name: "Jean Dupont",
     Sell_to_City: "Lille",
     Sell_to_Address: "40 Rue de Béthune",
     Sell_to_Post_Code: "59800",
@@ -225,6 +246,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-025",
+    Sell_to_Customer_Name: "Pierre Martin",
     Sell_to_City: "Lille",
     Sell_to_Address: "15 Boulevard de la Liberté",
     Sell_to_Post_Code: "59000",
@@ -237,6 +259,7 @@ export const mockOrders = [
   // ── Strasbourg (2 commandes) ──
   {
     No: "FR-2025-016",
+    Sell_to_Customer_Name: "Julien Moreau",
     Sell_to_City: "Strasbourg",
     Sell_to_Address: "5 Place Kléber",
     Sell_to_Post_Code: "67000",
@@ -247,6 +270,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-017",
+    Sell_to_Customer_Name: "Claire Bernard",
     Sell_to_City: "Strasbourg",
     Sell_to_Address: "18 Rue du Vieux-Marché-aux-Poissons",
     Sell_to_Post_Code: "67000",
@@ -259,6 +283,7 @@ export const mockOrders = [
   // ── Nantes (2 commandes) ──
   {
     No: "FR-2025-018",
+    Sell_to_Customer_Name: "François Dubois",
     Sell_to_City: "Nantes",
     Sell_to_Address: "1 Place Royale",
     Sell_to_Post_Code: "44000",
@@ -269,6 +294,7 @@ export const mockOrders = [
   },
   {
     No: "FR-2025-026",
+    Sell_to_Customer_Name: "Sophie Martin",
     Sell_to_City: "Nantes",
     Sell_to_Address: "8 Cours des 50 Otages",
     Sell_to_Post_Code: "44000",

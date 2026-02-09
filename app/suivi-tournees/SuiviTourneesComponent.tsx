@@ -315,8 +315,8 @@ export default function SuiviTourneesComponent() {
       m[key].push(o);
     });
     let entries = Object.entries(m).sort((a, b) => a[0].localeCompare(b[0]));
-    // Only show validated tours
-    entries = entries.filter(([city]) => assignments[city]?.closed === true);
+    // Only show validated tours that are NOT execution-closed (clôturées go to Historique)
+    entries = entries.filter(([city]) => assignments[city]?.closed === true && !assignments[city]?.execClosed);
     // Driver/chauffeur: only show tours assigned to the logged driverNo
     entries = entries.filter(([city]) => matchesLoggedDriver(assignments[city]?.driver));
     if (cityParam) {
@@ -333,6 +333,8 @@ export default function SuiviTourneesComponent() {
   }, [filteredOrders, cityParam, assignments, sessionRole, sessionDriverNo]);
 
   const startSignatureFlow = (city: string, orderNo: string) => {
+    const tour = assignments[city];
+    const includeReturns = tour?.includeReturns !== false;
     const params = new URLSearchParams();
     if (orderDate) params.set('date', orderDate);
     if (viewMode) params.set('view', viewMode);
@@ -342,6 +344,7 @@ export default function SuiviTourneesComponent() {
     const to = new URLSearchParams();
     to.set('shipmentNo', orderNo);
     to.set('next', backUrl);
+    if (!includeReturns) to.set('skipReturns', '1');
     router.push(`/pod-signature?${to.toString()}`);
   };
 
@@ -439,34 +442,8 @@ export default function SuiviTourneesComponent() {
           </div>
         </div>
 
-        {/* Global Recap */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white/70 backdrop-blur border rounded-xl p-4 shadow-sm flex items-center gap-4">
-            <div className="shrink-0 relative h-16 w-16 rounded-full" style={{
-              background: `conic-gradient(#10b981 ${globalRecap.percent}%, #e5e7eb 0)`
-            }}>
-              <div className="absolute inset-1 rounded-full bg-white/80 flex items-center justify-center">
-                <div className="text-sm font-bold text-slate-900">{globalRecap.percent}%</div>
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500">% Global livré</div>
-              <div className="text-2xl font-bold text-slate-900">{globalRecap.delivered} / {globalRecap.total}</div>
-            </div>
-          </div>
-          <div className="bg-white/70 backdrop-blur border rounded-xl p-4 shadow-sm">
-            <div className="text-xs text-slate-500">Livrées</div>
-            <div className="text-2xl font-bold text-slate-900">{globalRecap.delivered}</div>
-            <div className="mt-1 text-[11px] text-slate-500">En cours: {globalRecap.inProgress}</div>
-          </div>
-          <div className="bg-white/70 backdrop-blur border rounded-xl p-4 shadow-sm">
-            <div className="text-xs text-slate-500">Total commandes (toutes villes)</div>
-            <div className="text-2xl font-bold text-slate-900">{globalRecap.total}</div>
-          </div>
-        </div>
-
-        {/* Map is now hidden by default, shown per tour */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Tour cards — full width, stacked */}
+        <div className="flex flex-col gap-5">
           {byCity.map(([city, list]) => {
             const tour = assignments[city];
             const selectedNos = new Set(tour?.selectedOrders || []);
@@ -488,12 +465,14 @@ export default function SuiviTourneesComponent() {
               return true;
             });
             const execClosed = !!tour?.execClosed;
-            const showMap = openMaps[city] || false;
             const driverRaw = (tour?.driver || '').trim();
             const driverIsOccupied = /occup[ée]/i.test(driverRaw);
             const driverClean = driverRaw.replace(/\s*\(\s*occup[ée]\s*\)\s*/gi, ' ').replace(/\s+/g, ' ').trim();
             return (
               <div key={city} className={`group bg-white/80 backdrop-blur rounded-2xl border shadow-sm p-4 hover:shadow-md transition-all duration-200 ${execClosed ? 'border-emerald-300 opacity-80' : 'border-slate-200'}`}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Left: tour info + orders */}
+                <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="relative h-14 w-14 rounded-full shrink-0" style={{
@@ -564,15 +543,6 @@ export default function SuiviTourneesComponent() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <button
-                    onClick={() => setOpenMaps((prev) => ({ ...prev, [city]: !(prev[city] || false) }))}
-                    className="px-3 py-1.5 rounded-lg bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 text-xs"
-                    disabled={total === 0}
-                    title={total === 0 ? 'Aucune commande dans la tournée' : 'Afficher la carte de la tournée'}
-                  >
-                    {showMap ? 'Masquer carte' : 'Carte'}
-                  </button>
-
                   {!execClosed && (
                     <button
                       onClick={() => closeExecutionTour(city)}
@@ -583,23 +553,6 @@ export default function SuiviTourneesComponent() {
                     </button>
                   )}
                 </div>
-
-                {total > 0 && (
-                  <div className={showMap ? '' : 'hidden'}>
-                    <MapTours
-                      tour={{
-                        city,
-                        driver: tour?.driver,
-                        vehicle: tour?.vehicle,
-                        orders: inTour.map((o) => ({
-                          No: o.No,
-                          Sell_to_City: o.Sell_to_City || city,
-                          Sell_to_Post_Code: o.Sell_to_Post_Code || '',
-                        })),
-                      }}
-                    />
-                  </div>
-                )}
 
                 <div className="mb-4">
                   <div className="h-2.5 w-full rounded bg-slate-100 overflow-hidden">
@@ -670,6 +623,26 @@ export default function SuiviTourneesComponent() {
                   {inTour.length === 0 && (
                     <div className="px-3 py-4 text-sm text-slate-500">Aucune commande sélectionnée pour cette tournée.</div>
                   )}
+                </div>
+                </div>
+
+                {/* Right: map always visible */}
+                <div className="min-h-[250px]">
+                  {total > 0 && (
+                    <MapTours
+                      tour={{
+                        city,
+                        driver: tour?.driver,
+                        vehicle: tour?.vehicle,
+                        orders: inTour.map((o) => ({
+                          No: o.No,
+                          Sell_to_City: o.Sell_to_City || city,
+                          Sell_to_Post_Code: o.Sell_to_Post_Code || '',
+                        })),
+                      }}
+                    />
+                  )}
+                </div>
                 </div>
               </div>
             );

@@ -217,23 +217,33 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
             </div>
           </div>
 
-          <div className="xp2 mb-3" style={{ color: "var(--logo-4)" }}>Quantités récupérées (vides)</div>
+          {hasEmballagesVides && (
+            <>
+              <div className="xp2 mb-3" style={{ color: "var(--logo-4)" }}>Quantités récupérées (vides)</div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {defaultItems.map((it) => (
-              <div key={it.key} className="p-3 rounded-xl border bg-white" style={{ borderColor: "rgba(79,88,165,0.14)" }}>
-                <div className="xp3" style={{ color: "var(--logo-4)" }}>{it.label}</div>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  value={values[it.key] ?? 0}
-                  onChange={(e) => setValues((prev) => ({ ...prev, [it.key]: Number(e.target.value) }))}
-                  className="xp-text mt-2 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
-                  style={{ borderColor: "rgba(79,88,165,0.25)" }}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {defaultItems.map((it) => (
+                  <div key={it.key} className="p-3 rounded-xl border bg-white" style={{ borderColor: "rgba(79,88,165,0.14)" }}>
+                    <div className="xp3" style={{ color: "var(--logo-4)" }}>{it.label}</div>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={values[it.key] ?? 0}
+                      onChange={(e) => setValues((prev) => ({ ...prev, [it.key]: Number(e.target.value) }))}
+                      className="xp-text mt-2 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+                      style={{ borderColor: "rgba(79,88,165,0.25)" }}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
+
+          {!hasColis && !hasEmballagesVides && (
+            <div className="p-4 rounded-xl border bg-slate-50 text-sm text-slate-500 mb-3" style={{ borderColor: "rgba(79,88,165,0.14)" }}>
+              Aucun retour à saisir — ni colis ni emballages vides récupérés.
+            </div>
+          )}
 
           <div className="mt-4">
             <div className="xp3" style={{ color: "var(--logo-4)" }}>Note</div>
@@ -374,6 +384,27 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
                 Créé: {new Date(record.createdAt).toLocaleString()}
                 <br />
                 {record.updatedAt && <>Mis à jour: {new Date(record.updatedAt).toLocaleString()}</>}
+                <div className="mt-2">
+                  <button
+                    onClick={async () => {
+                      if (!confirm('Supprimer cet enregistrement de retours ?')) return;
+                      try {
+                        await fetch(`/api/returns?shipmentNo=${encodeURIComponent(shipmentNo)}`, { method: 'DELETE' });
+                        setRecord(null);
+                        setValues(() => {
+                          const init: Record<string, number> = {};
+                          for (const it of defaultItems) init[it.key] = 0;
+                          return init;
+                        });
+                        setNote('');
+                        setDefects([]);
+                        setHasColis(true);
+                        setHasEmballagesVides(true);
+                      } catch {}
+                    }}
+                    className="xp-text px-3 py-1.5 rounded-lg bg-white text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 text-xs"
+                  >Supprimer le retour</button>
+                </div>
               </div>
             ) : (
               <div className="xp-text mt-1 text-slate-500">Aucun retour enregistré</div>

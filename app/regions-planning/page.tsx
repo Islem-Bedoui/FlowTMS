@@ -285,15 +285,32 @@ export default function RegionsPlanningPage() {
         setChauffeurs(list.map((c: any, i: number) => ({ No: c.No, Name: c.Name + (i % 2 === 0 ? ' (disponible)' : ' (occupé)') })));
       } catch {}
     })();
-    // Load trucks (BC)
+    // Load trucks (BC + real-time vehicles)
     (async () => {
+      let bcTrucks: Truck[] = [];
       try {
         const res = await fetch('/api/listeCamions', { cache: 'no-store' });
         const data = await res.json();
         const list: any[] = Array.isArray(data?.value) ? data.value : (Array.isArray(data) ? data : []);
-        // Mock available trucks
-        setTrucks(list.map((t: any, i: number) => ({ No: t.No, Description: t.Description + (i % 2 === 0 ? ' (disponible)' : ' (entretien)'), License_Plate: t.License_Plate }))); 
+        bcTrucks = list.map((t: any, i: number) => ({ No: t.No, Description: t.Description + (i % 2 === 0 ? ' (disponible)' : ' (entretien)'), License_Plate: t.License_Plate }));
       } catch {}
+      // Also fetch real-time vehicles
+      try {
+        const res = await fetch('/api/vehicles', { cache: 'no-store' });
+        const data = await res.json();
+        const list: any[] = Array.isArray(data) ? data : [];
+        const rtTrucks: Truck[] = list.map((v: any) => ({
+          No: v.vehicle_id || '',
+          Description: v.service_name || v.vehicle_id || '',
+          License_Plate: v.plate_number || v.vehicle_id || '',
+        }));
+        // Merge: BC trucks first, then real-time vehicles not already in BC list
+        const existingNos = new Set(bcTrucks.map(t => t.No));
+        const merged = [...bcTrucks, ...rtTrucks.filter(t => !existingNos.has(t.No))];
+        setTrucks(merged);
+      } catch {
+        setTrucks(bcTrucks);
+      }
     })();
   }, [orderDate]);
 
@@ -356,7 +373,7 @@ export default function RegionsPlanningPage() {
     const norm = (s: string) => String(s).trim().toLowerCase().replace(/\s+/g, '');
     const _matchesLoggedDriver = (tourDriver?: string | null): boolean => {
       const role = (sessionRole || '').trim().toLowerCase();
-      const isDriver = role === 'Driver' || role === 'chauffeur';
+      const isDriver = role === 'driver' || role === 'chauffeur';
       if (!isDriver) return true;
       const driverNo = (sessionDriverNo || '').trim();
       if (!driverNo) return true;
@@ -386,6 +403,25 @@ export default function RegionsPlanningPage() {
     return entries;
   }, [filteredOrders, viewMode, assignments, sessionRole, sessionDriverNo]);
 
+
+  // Auto-select all orders per city — tours are ready directly
+  useEffect(() => {
+    setAssignments(prev => {
+      const next = { ...prev };
+      let changed = false;
+      byCity.forEach(([city, list]) => {
+        const allNos = list.map(o => o.No);
+        const existing = next[city]?.selectedOrders || [];
+        // Only update if selection differs
+        if (existing.length !== allNos.length || !allNos.every(no => existing.includes(no))) {
+          next[city] = { ...next[city], city, selectedOrders: allNos };
+          changed = true;
+        }
+      });
+      if (changed) { saveAssignments(next); return next; }
+      return prev;
+    });
+  }, [byCity]);
 
   const validation = useMemo(() => {
     const missingDriver: string[] = [];
@@ -604,17 +640,6 @@ export default function RegionsPlanningPage() {
           <p className="mt-1 text-sm text-slate-600">Regroupez par ville, sélectionnez les commandes de la tournée, assignez chauffeur et camion.</p>
         </div>
 
-      <datalist id="chauffeurs-list">
-        {chauffeurs.map(ch => (
-          <option key={ch.No} value={`${ch.Name} (${ch.No})`} />
-        ))}
-      </datalist>
-      <datalist id="trucks-list">
-        {trucks.map(tr => {
-          const label = `${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
-          return <option key={tr.No} value={label} />;
-        })}
-      </datalist>
         <div className="flex flex-wrap gap-2">
           <select
             value={cityFilter}
@@ -644,7 +669,6 @@ export default function RegionsPlanningPage() {
           />
           <button onClick={loadOrders} className="px-3 py-2 rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow hover:from-sky-500 hover:to-indigo-500 active:scale-[.99] disabled:opacity-60" disabled={loading}>{loading? 'Chargement…' : 'Recharger'}</button>
           <button onClick={exportToursCSV} className="px-3 py-2 rounded-lg bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">Exporter CSV</button>
-          <button onClick={printPage} className="px-3 py-2 rounded-lg bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">Imprimer</button>
           <Link href={`/suivi-tournees?date=${orderDate}&view=${viewMode}`} className="px-3 py-2 rounded-lg bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">Suivre</Link>
         </div>
       </div>
@@ -660,8 +684,8 @@ export default function RegionsPlanningPage() {
           <div className="text-2xl font-bold text-slate-900">{filteredOrders.length}</div>
         </div>
         <div className="bg-white/70 backdrop-blur border rounded-xl p-4 shadow-sm">
-          <div className="text-xs text-slate-500">Sélections</div>
-          <div className="text-2xl font-bold text-slate-900">{Object.values(assignments).reduce((a, t)=> a + (t.selectedOrders?.length || 0), 0)}</div>
+          <div className="text-xs text-slate-500">Tournées prêtes</div>
+          <div className="text-2xl font-bold text-slate-900">{validation.readyCount}</div>
         </div>
       </div>
 
@@ -684,12 +708,6 @@ export default function RegionsPlanningPage() {
               Camion manquant: {validation.missingVehicle.length}
             </span>
           )}
-          {validation.emptySelection.length > 0 && (
-            <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border text-slate-800">
-              <span className="inline-block h-2 w-2 rounded-full bg-slate-400"></span>
-              Sans sélection: {validation.emptySelection.length}
-            </span>
-          )}
           {validation.duplicateDrivers.length > 0 && (
             <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800">
               <span className="inline-block h-2 w-2 rounded-full bg-rose-500"></span>
@@ -710,8 +728,6 @@ export default function RegionsPlanningPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {byCity.map(([city, list]) => {
           const tour = getTour(city);
-          const selectedCount = tour.selectedOrders.length;
-          const isAll = selectedCount === list.length && list.length > 0;
           const isClosed = !!tour.closed;
           return (
             <div key={city} className={`group bg-white/80 backdrop-blur rounded-2xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 ring-1 ring-transparent hover:ring-sky-100 ${isClosed ? 'opacity-70' : ''}`}>
@@ -719,10 +735,7 @@ export default function RegionsPlanningPage() {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <div className="text-sm font-semibold text-slate-900">{city}</div>
                   <span className="text-xs px-2 py-0.5 rounded-full border bg-slate-50 text-slate-700">{list.length} cmd</span>
-                  {selectedCount > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700">{selectedCount} sélection</span>
-                  )}
-                  {(selectedCount > 0 && tour.driver && tour.vehicle) && (
+                  {(tour.driver && tour.vehicle) && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700">Prêt</span>
                   )}
                   {isClosed && (
@@ -734,7 +747,7 @@ export default function RegionsPlanningPage() {
                     <button
                       onClick={()=> validateTour(city, list)}
                       className={`text-xs px-2 py-1 border rounded-lg hover:bg-sky-50 transition-colors bg-sky-600 text-white`}
-                      disabled={isClosed || !(selectedCount > 0 && tour.driver && tour.vehicle)}
+                      disabled={isClosed || !(tour.driver && tour.vehicle)}
                     >Valider tournée</button>
                   )}
                   {isClosed && (
@@ -755,9 +768,9 @@ export default function RegionsPlanningPage() {
               {/* Progress */}
               <div className="mb-3">
                 <div className="h-1.5 w-full rounded bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-sky-500 to-indigo-500" style={{ width: `${Math.min(100, Math.round((selectedCount / Math.max(1, list.length)) * 100))}%` }} />
+                  <div className="h-full bg-gradient-to-r from-sky-500 to-indigo-500" style={{ width: '100%' }} />
                 </div>
-                <div className="mt-1 text-[10px] text-slate-500">{Math.min(100, Math.round((selectedCount / Math.max(1, list.length)) * 100))}% des commandes sélectionnées</div>
+                <div className="mt-1 text-[10px] text-slate-500">100% des commandes affectées</div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                 {/* Chauffeur dropdown: only show chauffeurs not already assigned to other tours */}
@@ -781,13 +794,29 @@ export default function RegionsPlanningPage() {
                     ));
                   })()}
                 </select>
-                <input
-                  list="trucks-list"
+                <select
                   className="px-2 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                   value={tour.vehicle || ''}
                   onChange={(e)=> setVehicle(city, e.target.value)}
-                  placeholder="Sélectionner camion…"
-                />
+                >
+                  <option value="">Sélectionner camion…</option>
+                  {(() => {
+                    const assignedVehicles = Object.entries(assignments)
+                      .filter(([c, t]) => c !== city && t.vehicle)
+                      .map(([_, t]) => t.vehicle);
+                    return trucks.filter(tr => {
+                      const label = `${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
+                      return !assignedVehicles.includes(label) || tour.vehicle === label;
+                    }).map(tr => {
+                      const label = `${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
+                      return (
+                        <option key={tr.No} value={label}>
+                          {label}
+                        </option>
+                      );
+                    });
+                  })()}
+                </select>
               </div>
 
               <div className="flex items-center justify-between mb-3">
@@ -803,60 +832,43 @@ export default function RegionsPlanningPage() {
                 <span className="text-[10px] text-slate-500">Obligatoire à la clôture si activé</span>
               </div>
 
-              <div className="text-xs text-slate-600 mb-1">Sélectionner les commandes:</div>
+              <div className="text-xs text-slate-600 mb-1">Commandes de la tournée:</div>
               <div className="border rounded-xl divide-y max-h-64 overflow-auto bg-white/60">
-                {(() => {
-                  const indexByNo = new Map<string, number>();
-                  (tour.selectedOrders || []).forEach((no, i) => indexByNo.set(no, i));
-
-                  const orderedList = [...list].sort((a, b) => {
-                    const ia = indexByNo.has(a.No) ? indexByNo.get(a.No)! : Number.POSITIVE_INFINITY;
-                    const ib = indexByNo.has(b.No) ? indexByNo.get(b.No)! : Number.POSITIVE_INFINITY;
-                    if (ia !== ib) return ia - ib;
-                    // keep stable-ish order for unselected items
-                    return String(a.No).localeCompare(String(b.No));
-                  });
-
-                  return orderedList.map((o, idx) => (
-                    <label key={o.No + '-' + idx} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
-                      <input type="checkbox" className="rounded text-sky-600 focus:ring-sky-500" checked={tour.selectedOrders.includes(o.No)} onChange={()=> toggleOrder(city, o.No)} />
-                      <span className="text-slate-800 font-medium">{o.No}</span>
-                      <span className="text-slate-500 ml-auto text-xs">{o.Sell_to_Post_Code || ''} {o.Sell_to_City || ''}</span>
-                      <span className="text-xs text-slate-500">Vol: {o.volume ?? '-'} m³</span>
-                      <span className="text-xs text-slate-500">Cap: {o.capacity ?? '-'} kg</span>
-                    </label>
-                  ));
-                })()}
+                {list.map((o, idx) => (
+                  <div key={o.No + '-' + idx} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
+                    <span className="inline-block h-2 w-2 rounded-full bg-sky-500"></span>
+                    <span className="text-slate-800 font-medium">{o.No}</span>
+                    <span className="text-slate-500 ml-auto text-xs">{o.Sell_to_Post_Code || ''} {o.Sell_to_City || ''}</span>
+                    <span className="text-xs text-slate-500">Vol: {o.volume ?? '-'} m³</span>
+                    <span className="text-xs text-slate-500">Cap: {o.capacity ?? '-'} kg</span>
+                  </div>
+                ))}
                 {list.length === 0 && (
                   <div className="px-3 py-4 text-sm text-slate-500">Aucune commande</div>
                 )}
               </div>
-              {selectedCount > 0 && (
-                <div className="mt-2 text-xs text-slate-600">
-                  Sélection: {selectedCount} commande(s){isAll ? ' (toutes)' : ''}<br />
-                  {/* Tour totals and mock duration */}
-                  {(() => {
-                    const selectedOrders = list.filter(o => tour.selectedOrders.includes(o.No));
-                    const totalVolume = selectedOrders.reduce((sum, o) => sum + (o.volume ?? 0), 0);
-                    const totalCapacity = selectedOrders.reduce((sum, o) => sum + (o.capacity ?? 0), 0);
-                    const duration = selectedOrders.length > 0 ? (selectedOrders.length * 45) : 0; // 45 min per order
-                    return (
-                      <>
-                        <span className="mr-2">Total Vol: {totalVolume} m³</span>
-                        <span className="mr-2">Total Cap: {totalCapacity} kg</span>
-                        <span className="mr-2">Durée: {duration} min</span>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
+              <div className="mt-2 text-xs text-slate-600">
+                {list.length} commande(s)<br />
+                {(() => {
+                  const totalVolume = list.reduce((sum, o) => sum + (o.volume ?? 0), 0);
+                  const totalCapacity = list.reduce((sum, o) => sum + (o.capacity ?? 0), 0);
+                  const duration = list.length > 0 ? (list.length * 45) : 0;
+                  return (
+                    <>
+                      <span className="mr-2">Total Vol: {totalVolume} m³</span>
+                      <span className="mr-2">Total Cap: {totalCapacity} kg</span>
+                      <span className="mr-2">Durée: {duration} min</span>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
           );
         })}
       </div>
 
       <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-sky-50 to-indigo-50 text-sky-900 border border-sky-100 text-sm shadow-sm">
-        - Regroupement par ville automatique. Saisissez un Chauffeur et un Camion par ville, puis cochez les commandes de la tournée.
+        - Regroupement par ville automatique. Les commandes sont réparties automatiquement. Saisissez un Chauffeur et un Camion par ville, puis validez la tournée.
         <br /> 
       </div>
       </div>

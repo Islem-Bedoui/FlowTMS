@@ -117,6 +117,22 @@ export async function GET(req: Request) {
   }
 }
 
+export async function DELETE(req: Request) {
+  try {
+    await ensureDirs();
+    const { searchParams } = new URL(req.url);
+    const shipmentNo = (searchParams.get("shipmentNo") || "").trim();
+    if (!shipmentNo) {
+      return NextResponse.json({ error: "shipmentNo is required" }, { status: 400 });
+    }
+    const recPath = path.join(returnsDir, `${safeFilePart(shipmentNo)}.json`);
+    try { await fs.unlink(recPath); } catch {}
+    return NextResponse.json({ ok: true });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Failed to delete returns" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     await ensureDirs();

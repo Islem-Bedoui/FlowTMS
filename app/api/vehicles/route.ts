@@ -1,51 +1,101 @@
 import { NextResponse } from 'next/server';
 
-// Données factices pour les véhicules en Europe
-const europeanCities = [
-  { name: 'Paris', lat: 48.8566, lng: 2.3522 },
-  { name: 'Berlin', lat: 52.5200, lng: 13.4050 },
-  { name: 'Madrid', lat: 40.4168, lng: -3.7038 },
-  { name: 'Rome', lat: 41.9028, lng: 12.4964 },
-  { name: 'Amsterdam', lat: 52.3676, lng: 4.9041 },
-  { name: 'Vienne', lat: 48.2082, lng: 16.3738 },
-  { name: 'Prague', lat: 50.0755, lng: 14.4378 },
-  { name: 'Bruxelles', lat: 50.8503, lng: 4.3517 }
+// Véhicules fixes avec positions stables
+const mockVehicles = [
+  {
+    vehicle_id: 'TRK-1000',
+    service_name: 'Volvo FH16',
+    destination: 'Rome',
+    speed: 110,
+    lat: 48.7571,
+    lng: 2.1776,
+    last_gps_fix: Math.floor(Date.now() / 1000),
+    plate_number: 'AB-123-CD',
+  },
+  {
+    vehicle_id: 'TRK-1001',
+    service_name: 'Mercedes Actros',
+    destination: 'Amsterdam',
+    speed: 110,
+    lat: 52.3824,
+    lng: 13.5420,
+    last_gps_fix: Math.floor(Date.now() / 1000),
+    plate_number: 'EF-456-GH',
+  },
+  {
+    vehicle_id: 'TRK-1002',
+    service_name: 'MAN TGX',
+    destination: 'Vienne',
+    speed: 110,
+    lat: 40.6025,
+    lng: -3.8336,
+    last_gps_fix: Math.floor(Date.now() / 1000),
+    plate_number: 'IJ-789-KL',
+  },
+  {
+    vehicle_id: 'TRK-1003',
+    service_name: 'Scania R-Series',
+    destination: 'Prague',
+    speed: 110,
+    lat: 41.9550,
+    lng: 12.5612,
+    last_gps_fix: Math.floor(Date.now() / 1000),
+    plate_number: 'MN-012-OP',
+  },
+  {
+    vehicle_id: 'TRK-1004',
+    service_name: 'DAF XF',
+    destination: 'Bruxelles',
+    speed: 110,
+    lat: 52.3676,
+    lng: 4.9041,
+    last_gps_fix: Math.floor(Date.now() / 1000),
+    plate_number: 'QR-345-ST',
+  },
+  {
+    vehicle_id: 'TRK-1005',
+    service_name: 'Iveco S-Way',
+    destination: 'Paris',
+    speed: 110,
+    lat: 48.0181,
+    lng: 16.3025,
+    last_gps_fix: Math.floor(Date.now() / 1000),
+    plate_number: 'UV-678-WX',
+  },
+  {
+    vehicle_id: 'TRK-1006',
+    service_name: 'Renault T-Range',
+    destination: 'Berlin',
+    speed: 110,
+    lat: 49.8635,
+    lng: 14.3190,
+    last_gps_fix: Math.floor(Date.now() / 1000),
+    plate_number: 'YZ-901-AB',
+  },
+  {
+    vehicle_id: 'TRK-1007',
+    service_name: 'DAF CF',
+    destination: 'Madrid',
+    speed: 110,
+    lat: 50.7680,
+    lng: 4.3256,
+    last_gps_fix: Math.floor(Date.now() / 1000),
+    plate_number: 'CD-234-EF',
+  },
 ];
-
-const truckBrands = ['Volvo', 'Mercedes', 'MAN', 'Scania', 'DAF', 'Iveco', 'Renault', 'DAF'];
-const truckModels = ['FH16', 'Actros', 'TGX', 'R-Series', 'XF', 'S-Way', 'T-Range', 'CF'];
-
-// Générer des camions factices avec des positions en Europe
-function generateMockVehicles() {
-  return europeanCities.map((city, index) => {
-    const brand = truckBrands[index % truckBrands.length];
-    const model = truckModels[index % truckModels.length];
-    const randomOffset = () => (Math.random() * 0.5 - 0.25); // ±0.25 degrés de décalage
-    
-    return {
-      vehicle_id: `TRK-${1000 + index}`,
-      service_name: `${brand} ${model}`,
-      destination: europeanCities[(index + 3) % europeanCities.length].name,
-      speed: 60 + Math.floor(Math.random() * 40), // Vitesse entre 60 et 100 km/h
-      lat: city.lat + randomOffset(),
-      lng: city.lng + randomOffset(),
-      last_gps_fix: Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 60)
-    };
-  });
-}
-
-// Générer les véhicules initiaux
-let mockVehicles = generateMockVehicles();
 
 export async function GET() {
   try {
-    // Générer de nouvelles positions aléatoires à chaque appel
-    mockVehicles = generateMockVehicles();
-    
     // Simuler un délai de chargement réaliste
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    return NextResponse.json(mockVehicles);
+
+    // Mettre à jour le timestamp GPS à chaque appel
+    const vehicles = mockVehicles.map(v => ({
+      ...v,
+      last_gps_fix: Math.floor(Date.now() / 1000),
+    }));
+
+    return NextResponse.json(vehicles);
   } catch (error) {
     console.error('Error fetching vehicles:', error);
     return NextResponse.json(

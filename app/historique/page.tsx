@@ -13,6 +13,7 @@ type CityTour = {
   selectedOrders: string[];
   locked?: boolean;
   closed?: boolean;
+  execClosed?: boolean;
   optimized?: boolean;
 };
 
@@ -112,7 +113,7 @@ export default function HistoriquePage() {
 
   const closedTours = useMemo(() => {
     const list = Object.values(assignments || {})
-      .filter((t) => t && t.closed)
+      .filter((t) => t && t.closed && t.execClosed)
       .filter((t) => (t.selectedOrders || []).some((no) => isMockShipmentNo(no)));
     list.sort((a, b) => String(a.city || "").localeCompare(String(b.city || "")));
     return list;
@@ -293,7 +294,7 @@ export default function HistoriquePage() {
                         <th className="xp3 px-3 py-2">Signé par</th>
                         <th className="xp3 px-3 py-2">Note</th>
                         <th className="xp3 px-3 py-2">Pièces</th>
-                        <th className="xp3 px-3 py-2">Action</th>
+                        <th className="xp3 px-3 py-2">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white">

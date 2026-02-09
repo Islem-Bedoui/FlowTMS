@@ -6,6 +6,7 @@ import { mockOrders } from "../../types/mockOrders";
 
 type Order = {
   No: string;
+  Sell_to_Customer_Name?: string;
   Sell_to_City?: string;
   Sell_to_Address?: string;
   Sell_to_Post_Code?: string;
@@ -266,6 +267,7 @@ export default function ExpeditionsPage() {
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500" style={{ background: "linear-gradient(135deg, #f8fafc, #f1f5f9)" }}>
                   <th className="px-4 py-3 font-semibold">N° Commande</th>
+                  <th className="px-4 py-3 font-semibold">Client</th>
                   <th className="px-4 py-3 font-semibold">Ville</th>
                   <th className="px-4 py-3 font-semibold">Adresse</th>
                   <th className="px-4 py-3 font-semibold">Date livraison</th>
@@ -287,6 +289,7 @@ export default function ExpeditionsPage() {
                   return (
                     <tr key={o.No} className={`border-t border-slate-100 hover:bg-sky-50/30 transition ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
                       <td className="px-4 py-3 font-semibold text-xs" style={{ color: "var(--logo-1)" }}>{o.No}</td>
+                      <td className="px-4 py-3 text-xs text-slate-700 font-medium">{o.Sell_to_Customer_Name || '-'}</td>
                       <td className="px-4 py-3 text-xs text-slate-700 font-medium">{city}</td>
                       <td className="px-4 py-3 text-xs text-slate-600 max-w-[220px]">
                         <div className="truncate">{o.Sell_to_Address}</div>
@@ -320,13 +323,13 @@ export default function ExpeditionsPage() {
                 })}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-400">Aucune expédition trouvée</td>
+                    <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-400">Aucune expédition trouvée</td>
                   </tr>
                 )}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200" style={{ background: "linear-gradient(135deg, #f8fafc, #f1f5f9)" }}>
-                  <td className="px-4 py-3 text-xs font-bold text-slate-700" colSpan={4}>{filtered.length} expédition(s)</td>
+                  <td className="px-4 py-3 text-xs font-bold text-slate-700" colSpan={5}>{filtered.length} expédition(s)</td>
                   <td className="px-4 py-3 text-xs font-bold text-slate-700 text-right">{totalVol} m³</td>
                   <td className="px-4 py-3 text-xs font-bold text-slate-700 text-right">{totalCap.toLocaleString()} kg</td>
                   <td className="px-4 py-3" colSpan={2} />

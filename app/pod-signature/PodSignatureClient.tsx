@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { mockOrders } from "@/types/mockOrders";
 
 type PodRecord = {
   shipmentNo: string;
@@ -24,14 +25,25 @@ function getCanvasPoint(canvas: HTMLCanvasElement, e: PointerEvent) {
   return { x, y };
 }
 
-export default function PodSignatureClient({ shipmentNo, nextUrl }: { shipmentNo: string; nextUrl?: string }) {
+export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }: { shipmentNo: string; nextUrl?: string; skipReturns?: boolean }) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
   const [hasDrawn, setHasDrawn] = useState(false);
 
+  const customerName = useMemo(() => {
+    const no = String(shipmentNo || '').trim();
+    if (!no) return '';
+    const order = (mockOrders as any[]).find(o => String(o?.No || '').trim() === no);
+    return String(order?.Sell_to_Customer_Name || '').trim();
+  }, [shipmentNo]);
+
   const [signedBy, setSignedBy] = useState("");
+
+  useEffect(() => {
+    if (customerName && !signedBy) setSignedBy(customerName);
+  }, [customerName]);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [bcSigning, setBcSigning] = useState(false);
@@ -61,7 +73,7 @@ export default function PodSignatureClient({ shipmentNo, nextUrl }: { shipmentNo
       .trim()
       .toLowerCase() === "yes";
 
-  const canSave = useMemo(() => Boolean(shipmentNo) && !saving && hasDrawn, [shipmentNo, saving, hasDrawn]);
+  const canSave = useMemo(() => Boolean(shipmentNo) && !saving && hasDrawn && signedBy.trim().length > 0, [shipmentNo, saving, hasDrawn, signedBy]);
 
   useEffect(() => {
     return () => {
@@ -295,8 +307,12 @@ export default function PodSignatureClient({ shipmentNo, nextUrl }: { shipmentNo
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    if (!signedBy.trim()) {
+      setError("Veuillez saisir le nom du client.");
+      return;
+    }
     if (!hasDrawn) {
-      setError("Veuillez signer avant d’enregistrer.");
+      setError("Veuillez signer avant d'enregistrer.");
       return;
     }
 
@@ -314,11 +330,17 @@ export default function PodSignatureClient({ shipmentNo, nextUrl }: { shipmentNo
       if (!res.ok) throw new Error(json?.error || "Erreur enregistrement");
       setRecord(json.record || null);
 
-      // Chain workflow: Signature -> Retours -> back to suivi via nextUrl
-      const params = new URLSearchParams();
-      params.set('shipmentNo', shipmentNo);
-      if (nextUrl) params.set('next', nextUrl);
-      router.push(`/retours-vides?${params.toString()}`);
+      // Chain workflow: Signature -> Retours (if included) -> back to suivi via nextUrl
+      if (skipReturns) {
+        // Skip retours, go directly back
+        if (nextUrl) router.push(nextUrl);
+        else router.push('/suivi-tournees');
+      } else {
+        const params = new URLSearchParams();
+        params.set('shipmentNo', shipmentNo);
+        if (nextUrl) params.set('next', nextUrl);
+        router.push(`/retours-vides?${params.toString()}`);
+      }
 
       if (showBcSignPdfButton) {
         try {
@@ -384,7 +406,8 @@ export default function PodSignatureClient({ shipmentNo, nextUrl }: { shipmentNo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             <div>
               <div className="xp3" style={{ color: "var(--logo-4)" }}>Signé par</div>
-              <input value={signedBy} onChange={e => setSignedBy(e.target.value)} className="xp-text mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2" style={{ borderColor: "rgba(79,88,165,0.25)" }} placeholder="Nom du client..." />
+              <input value={signedBy} onChange={e => setSignedBy(e.target.value)} className="xp-text mt-1 w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2" style={{ borderColor: signedBy.trim() ? "rgba(79,88,165,0.25)" : "#ef4444" }} placeholder="Nom du client (obligatoire)" />
+              {!signedBy.trim() && <div className="text-xs text-rose-500 mt-1">Le nom du client est obligatoire</div>}
             </div>
             <div>
               <div className="xp3" style={{ color: "var(--logo-4)" }}>Note</div>
@@ -466,6 +489,18 @@ export default function PodSignatureClient({ shipmentNo, nextUrl }: { shipmentNo
               <div className="mt-2">
                 <div className="xp-text text-slate-600">Date: {new Date(record.createdAt).toLocaleString()}</div>
                 <img src={record.imagePath} alt="Signature" className="mt-2 rounded-xl border bg-white" style={{ borderColor: "rgba(79,88,165,0.18)" }} />
+                <button
+                  onClick={async () => {
+                    if (!confirm('Supprimer cette signature POD ?')) return;
+                    try {
+                      await fetch(`/api/pod?shipmentNo=${encodeURIComponent(shipmentNo)}`, { method: 'DELETE' });
+                      setRecord(null);
+                      setSignedBy('');
+                      clear();
+                    } catch {}
+                  }}
+                  className="xp-text mt-2 px-3 py-1.5 rounded-lg bg-white text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 text-xs"
+                >Supprimer la signature</button>
               </div>
             ) : (
               <div className="xp-text mt-1 text-slate-500">Aucune signature enregistrée</div>
