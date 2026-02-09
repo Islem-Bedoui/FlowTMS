@@ -9,6 +9,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 // ...existing types...
 type Order = {
   No: string;
+  Sell_to_Customer_Name?: string;
   Sell_to_City?: string;
   Sell_to_Post_Code?: string;
   Requested_Delivery_Date?: string;
@@ -218,6 +219,7 @@ export default function SuiviTourneesComponent() {
       setOrders(
         mockOrders.map((o: any) => ({
           No: o.No,
+          Sell_to_Customer_Name: o.Sell_to_Customer_Name || "",
           Sell_to_City: o.Sell_to_City || "",
           Sell_to_Post_Code: o.Sell_to_Post_Code || "",
           Requested_Delivery_Date: o.Requested_Delivery_Date || o.requestedDeliveryDate || undefined,
@@ -573,6 +575,7 @@ export default function SuiviTourneesComponent() {
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="text-slate-800 font-medium shrink-0">{o.No}</span>
                             <span className="text-slate-500 truncate">{o.Sell_to_Post_Code || ""} {o.Sell_to_City || ""}</span>
+                            {o.Sell_to_Customer_Name && <span className="text-slate-600 text-xs truncate">— {o.Sell_to_Customer_Name}</span>}
                           </div>
 
                           <div className="mt-1 flex flex-wrap items-center gap-2">
