@@ -53,6 +53,17 @@ function hashToUnit(input: string): number {
     h ^= input.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
+
+  function matchesLoggedDriver(tourDriver?: string | null): boolean {
+    const role = (sessionRole || '').trim().toLowerCase();
+    const isDriver = role === 'driver' || role === 'chauffeur';
+    if (!isDriver) return true;
+    const driverNo = (sessionDriverNo || '').trim();
+    if (!driverNo) return true;
+    if (!tourDriver) return false;
+    const norm = (s: string) => String(s).trim().toLowerCase().replace(/\s+/g, '');
+    return norm(tourDriver).includes(norm(driverNo));
+  }
   const u = (h >>> 0) / 4294967295;
   return u;
 }
@@ -197,17 +208,6 @@ export default function RegionsPlanningPage() {
       setOrderDate(`${y}-${m}-${d}`);
     }
   }, []);
-
-  function matchesLoggedDriver(tourDriver?: string | null): boolean {
-    const role = (sessionRole || '').trim().toLowerCase();
-    const isDriver = role === 'driver' || role === 'chauffeur';
-    if (!isDriver) return true;
-    const driverNo = (sessionDriverNo || '').trim();
-    if (!driverNo) return true;
-    if (!tourDriver) return false;
-    const norm = (s: string) => String(s).trim().toLowerCase().replace(/\s+/g, '');
-    return norm(tourDriver).includes(norm(driverNo));
-  }
 
   function exportToursCSV() {
     const rows: string[] = [];
