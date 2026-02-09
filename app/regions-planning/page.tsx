@@ -333,46 +333,45 @@ export default function RegionsPlanningPage() {
     return orders.filter(o => (q ? matchesQuery(o) : true) && matchesDate(o) && matchesCity(o));
   }, [orders, query, orderDate, viewMode, cityFilter]);
 
-  // FIX: Define these BEFORE useMemo hooks to prevent hoisting errors
-const getTour = React.useCallback((city: string): CityTour => {
-  const existing = assignments[city];
-  if (existing) return existing;
-  return { city, selectedOrders: [] };
-}, [assignments]);
+  const getTour = React.useCallback((city: string): CityTour => {
+    const existing = assignments[city];
+    if (existing) return existing;
+    return { city, selectedOrders: [] };
+  }, [assignments]);
 
+  const byCity = useMemo(() => {
+    const norm = (s: string) => String(s).trim().toLowerCase().replace(/\s+/g, '');
+    const _matchesLoggedDriver = (tourDriver?: string | null): boolean => {
+      const role = (sessionRole || '').trim().toLowerCase();
+      const isDriver = role === 'driver' || role === 'chauffeur';
+      if (!isDriver) return true;
+      const driverNo = (sessionDriverNo || '').trim();
+      if (!driverNo) return true;
+      if (!tourDriver) return false;
+      return norm(tourDriver).includes(norm(driverNo));
+    };
 
-function matchesLoggedDriver(tourDriver?: string | null): boolean {
-  const role = (sessionRole || '').trim().toLowerCase();
-  const isDriver = role === 'driver' || role === 'chauffeur';
-  if (!isDriver) return true;
-  const driverNo = (sessionDriverNo || '').trim();
-  if (!driverNo) return true;
-  if (!tourDriver) return false;
-  const norm = (s: string) => 
-    String(s).trim().toLowerCase().replace(/\s+/g, '');
-  return norm(tourDriver).includes(norm(driverNo));
-}
+    const m: Record<string, Order[]> = {};
+    filteredOrders.forEach(o => {
+      const key = (o.Sell_to_City || "Autres").trim() || "Autres";
+      if (!m[key]) m[key] = [];
+      m[key].push(o);
+    });
 
-const byCity = useMemo(() => {
-  const m: Record<string, Order[]> = {};
-  filteredOrders.forEach(o => {
-    const key = (o.Sell_to_City || "Autres").trim() || "Autres";
-    if (!m[key]) m[key] = [];
-    m[key].push(o);
-  });
+    let entries = Object.entries(m).sort((a, b) => a[0].localeCompare(b[0]));
 
-  let entries = Object.entries(m).sort((a,b)=> a[0].localeCompare(b[0]));
+    entries = entries.filter(([city]) => {
+      const t = assignments[city];
+      const driver = t ? t.driver : undefined;
+      return _matchesLoggedDriver(driver);
+    });
 
-  entries = entries.filter(([city]) =>
-    matchesLoggedDriver(getTour(city)?.driver)
-  );
+    if (viewMode === 'day') {
+      entries = entries.slice(0, 3);
+    }
 
-  if (viewMode === 'day') {
-    entries = entries.slice(0, 3);
-  }
-
-  return entries;
-}, [filteredOrders, viewMode, assignments, sessionRole, sessionDriverNo]);
+    return entries;
+  }, [filteredOrders, viewMode, assignments, sessionRole, sessionDriverNo]);
 
 
   const validation = useMemo(() => {
