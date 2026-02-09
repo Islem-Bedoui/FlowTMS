@@ -343,7 +343,7 @@ export default function RegionsPlanningPage() {
     const norm = (s: string) => String(s).trim().toLowerCase().replace(/\s+/g, '');
     const _matchesLoggedDriver = (tourDriver?: string | null): boolean => {
       const role = (sessionRole || '').trim().toLowerCase();
-      const isDriver = role === 'driver' || role === 'chauffeur';
+      const isDriver = role === 'Driver' || role === 'chauffeur';
       if (!isDriver) return true;
       const driverNo = (sessionDriverNo || '').trim();
       if (!driverNo) return true;
