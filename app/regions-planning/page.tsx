@@ -334,23 +334,30 @@ export default function RegionsPlanningPage() {
   }, [orders, query, orderDate, viewMode, cityFilter]);
 
   // FIX: Define these BEFORE useMemo hooks to prevent hoisting errors
-function getTour(city: string): CityTour {
+const getTour = React.useCallback((city: string): CityTour => {
   const existing = assignments[city];
   if (existing) return existing;
   return { city, selectedOrders: [] };
-}
+}, [assignments]);
 
-function matchesLoggedDriver(tourDriver?: string | null): boolean {
+
+const matchesLoggedDriver = React.useCallback((tourDriver?: string | null): boolean => {
   const role = (sessionRole || '').trim().toLowerCase();
   const isDriver = role === 'driver' || role === 'chauffeur';
+
   if (!isDriver) return true;
+
   const driverNo = (sessionDriverNo || '').trim();
   if (!driverNo) return true;
+
   if (!tourDriver) return false;
-  const norm = (s: string) => 
+
+  const norm = (s: string) =>
     String(s).trim().toLowerCase().replace(/\s+/g, '');
+
   return norm(tourDriver).includes(norm(driverNo));
-}
+}, [sessionRole, sessionDriverNo]);
+
 
   const byCity = useMemo(() => {
     const m: Record<string, Order[]> = {};
@@ -374,7 +381,16 @@ function matchesLoggedDriver(tourDriver?: string | null): boolean {
 
     return entries;
 
-  }, [filteredOrders, viewMode, assignments, sessionRole, sessionDriverNo]);
+  }, [
+  filteredOrders,
+  viewMode,
+  assignments,
+  sessionRole,
+  sessionDriverNo,
+  getTour,
+  matchesLoggedDriver
+]);
+
 
   const validation = useMemo(() => {
     const missingDriver: string[] = [];
