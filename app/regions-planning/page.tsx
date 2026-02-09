@@ -333,20 +333,24 @@ export default function RegionsPlanningPage() {
     return orders.filter(o => (q ? matchesQuery(o) : true) && matchesDate(o) && matchesCity(o));
   }, [orders, query, orderDate, viewMode, cityFilter]);
 
-  function matchesLoggedDriver(tourDriver?: string | null): boolean {
-    const role = (sessionRole || '').trim().toLowerCase();
-    const isDriver = role === 'driver' || role === 'chauffeur';
-    if (!isDriver) return true;
+  // FIX: Define these BEFORE useMemo hooks to prevent hoisting errors
+function getTour(city: string): CityTour {
+  const existing = assignments[city];
+  if (existing) return existing;
+  return { city, selectedOrders: [] };
+}
 
-    const driverNo = (sessionDriverNo || '').trim();
-    if (!driverNo) return true;
-    if (!tourDriver) return false;
-
-    const norm = (s: string) =>
-      String(s).trim().toLowerCase().replace(/\s+/g, '');
-
-    return norm(tourDriver).includes(norm(driverNo));
-  }
+function matchesLoggedDriver(tourDriver?: string | null): boolean {
+  const role = (sessionRole || '').trim().toLowerCase();
+  const isDriver = role === 'driver' || role === 'chauffeur';
+  if (!isDriver) return true;
+  const driverNo = (sessionDriverNo || '').trim();
+  if (!driverNo) return true;
+  if (!tourDriver) return false;
+  const norm = (s: string) => 
+    String(s).trim().toLowerCase().replace(/\s+/g, '');
+  return norm(tourDriver).includes(norm(driverNo));
+}
 
   const byCity = useMemo(() => {
     const m: Record<string, Order[]> = {};
@@ -399,11 +403,7 @@ export default function RegionsPlanningPage() {
     return { missingDriver, missingVehicle, emptySelection, duplicateDrivers, readyCount };
   }, [byCity, assignments]);
 
-  function getTour(city: string): CityTour {
-    const existing = assignments[city];
-    if (existing) return existing;
-    return { city, selectedOrders: [] };
-  }
+ 
 
   const validateTour = async (city: string, list: Order[]) => {
     const t = getTour(city);
