@@ -341,55 +341,38 @@ const getTour = React.useCallback((city: string): CityTour => {
 }, [assignments]);
 
 
-const matchesLoggedDriver = React.useCallback((tourDriver?: string | null): boolean => {
+function matchesLoggedDriver(tourDriver?: string | null): boolean {
   const role = (sessionRole || '').trim().toLowerCase();
   const isDriver = role === 'driver' || role === 'chauffeur';
-
   if (!isDriver) return true;
-
   const driverNo = (sessionDriverNo || '').trim();
   if (!driverNo) return true;
-
   if (!tourDriver) return false;
-
-  const norm = (s: string) =>
+  const norm = (s: string) => 
     String(s).trim().toLowerCase().replace(/\s+/g, '');
-
   return norm(tourDriver).includes(norm(driverNo));
-}, [sessionRole, sessionDriverNo]);
+}
 
+const byCity = useMemo(() => {
+  const m: Record<string, Order[]> = {};
+  filteredOrders.forEach(o => {
+    const key = (o.Sell_to_City || "Autres").trim() || "Autres";
+    if (!m[key]) m[key] = [];
+    m[key].push(o);
+  });
 
-  const byCity = useMemo(() => {
-    const m: Record<string, Order[]> = {};
-    const filtered = filteredOrders;
+  let entries = Object.entries(m).sort((a,b)=> a[0].localeCompare(b[0]));
 
-    filtered.forEach(o => {
-      const key = (o.Sell_to_City || "Autres").trim() || "Autres";
-      if (!m[key]) m[key] = [];
-      m[key].push(o);
-    });
+  entries = entries.filter(([city]) =>
+    matchesLoggedDriver(getTour(city)?.driver)
+  );
 
-    let entries = Object.entries(m).sort((a,b)=> a[0].localeCompare(b[0]));
+  if (viewMode === 'day') {
+    entries = entries.slice(0, 3);
+  }
 
-    entries = entries.filter(([city]) =>
-      matchesLoggedDriver(getTour(city)?.driver)
-    );
-
-    if (viewMode === 'day') {
-      entries = entries.slice(0, 3);
-    }
-
-    return entries;
-
-  }, [
-  filteredOrders,
-  viewMode,
-  assignments,
-  sessionRole,
-  sessionDriverNo,
-  getTour,
-  matchesLoggedDriver
-]);
+  return entries;
+}, [filteredOrders, viewMode, assignments, sessionRole, sessionDriverNo]);
 
 
   const validation = useMemo(() => {
