@@ -12,15 +12,14 @@ type PodRecord = {
   note?: string;
   createdAt: string;
   imagePath?: string;
+  imageDataUrl?: string;
 };
 
 const dataDir = path.join(process.cwd(), "data", "tms");
 const podsDir = path.join(dataDir, "pods");
-const publicPodsDir = path.join(process.cwd(), "public", "tms", "pods");
 
 async function ensureDirs() {
   await fs.mkdir(podsDir, { recursive: true });
-  await fs.mkdir(publicPodsDir, { recursive: true });
 }
 
 function safeFilePart(v: string) {
@@ -97,29 +96,13 @@ export async function POST(req: Request) {
     }
 
     const now = new Date().toISOString();
-    let imagePath: string | undefined;
-
-    if (body.imageDataUrl) {
-      const m = body.imageDataUrl.match(/^data:image\/(png|jpeg);base64,(.*)$/);
-      if (!m) {
-        return NextResponse.json({ error: "Invalid imageDataUrl" }, { status: 400 });
-      }
-      const ext = m[1] === "jpeg" ? "jpg" : "png";
-      const b64 = m[2];
-      const buf = Buffer.from(b64, "base64");
-
-      const fileName = `${safeFilePart(shipmentNo)}-${Date.now()}.${ext}`;
-      const filePath = path.join(publicPodsDir, fileName);
-      await fs.writeFile(filePath, buf);
-      imagePath = path.posix.join("/tms/pods", fileName);
-    }
 
     const record: PodRecord = {
       shipmentNo,
       signedBy: body.signedBy?.trim() || undefined,
       note: body.note?.trim() || undefined,
       createdAt: now,
-      imagePath,
+      imageDataUrl: body.imageDataUrl || undefined,
     };
 
     const metaPath = path.join(podsDir, `${safeFilePart(shipmentNo)}.json`);

@@ -11,6 +11,7 @@ type PodRecord = {
   note?: string;
   createdAt: string;
   imagePath?: string;
+  imageDataUrl?: string;
 };
 
 type SalesShipmentLookup = {
@@ -498,10 +499,10 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
             <div className="xp3" style={{ color: "var(--logo-4)" }}>Dernière signature enregistrée</div>
             {loading ? (
               <div className="xp-text mt-1 text-slate-500">Chargement...</div>
-            ) : record?.imagePath ? (
+            ) : (record?.imageDataUrl || record?.imagePath) ? (
               <div className="mt-2">
                 <div className="xp-text text-slate-600">Date: {new Date(record.createdAt).toLocaleString()}</div>
-                <img src={record.imagePath} alt="Signature" className="mt-2 rounded-xl border bg-white" style={{ borderColor: "rgba(79,88,165,0.18)" }} />
+                <img src={record.imageDataUrl || record.imagePath} alt="Signature" className="mt-2 rounded-xl border bg-white" style={{ borderColor: "rgba(79,88,165,0.18)" }} />
                 <button
                   onClick={async () => {
                     if (!confirm('Supprimer cette signature POD ?')) return;

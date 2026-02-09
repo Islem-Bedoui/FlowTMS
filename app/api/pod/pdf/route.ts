@@ -13,6 +13,7 @@ type PodRecord = {
   note?: string;
   createdAt: string;
   imagePath?: string;
+  imageDataUrl?: string;
 };
 
 const dataDir = path.join(process.cwd(), "data", "tms");
@@ -185,7 +186,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "POD record not found", shipmentNo }, { status: 404 });
     }
 
-    const signatureBytes = rec.imagePath ? await loadSignatureBytesFromPublicPath(rec.imagePath) : null;
+    let signatureBytes: Uint8Array | null = null;
+    if (rec.imageDataUrl) {
+      const m = rec.imageDataUrl.match(/^data:image\/(png|jpeg);base64,(.*)$/);
+      if (m) signatureBytes = new Uint8Array(Buffer.from(m[2], 'base64'));
+    } else if (rec.imagePath) {
+      signatureBytes = await loadSignatureBytesFromPublicPath(rec.imagePath);
+    }
     const pdfBuf = await generatePodPdf({
       shipmentNo: rec.shipmentNo,
       signedBy: rec.signedBy,

@@ -23,6 +23,7 @@ type PodRecord = {
   note?: string;
   createdAt: string;
   imagePath?: string;
+  imageDataUrl?: string;
 };
 
 type ReturnsRecord = {
@@ -314,9 +315,9 @@ export default function HistoriquePage() {
                           <td className="xp-text px-3 py-2">{r.note || "-"}</td>
                           <td className="xp-text px-3 py-2">
                             <div className="flex flex-wrap gap-2">
-                              {r.imagePath ? (
+                              {(r.imageDataUrl || r.imagePath) ? (
                                 <a
-                                  href={r.imagePath}
+                                  href={r.imageDataUrl || r.imagePath}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="xp-text inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
