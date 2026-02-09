@@ -29,6 +29,7 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const isDrawingRef = useRef(false);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
   const [hasDrawn, setHasDrawn] = useState(false);
 
@@ -252,14 +253,21 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    canvas.setPointerCapture(e.pointerId);
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
     setIsDrawing(true);
+    isDrawingRef.current = true;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    ctx.strokeStyle = "#0e112c";
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     const { x, y } = getCanvasPoint(canvas, e.nativeEvent);
     lastRef.current = { x, y };
@@ -268,7 +276,8 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
+    e.preventDefault();
+    if (!isDrawingRef.current) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -292,7 +301,8 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
   };
 
   const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
+    e.preventDefault();
+    if (!isDrawingRef.current) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     try {
@@ -300,6 +310,7 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
     } catch {
     }
     setIsDrawing(false);
+    isDrawingRef.current = false;
     lastRef.current = null;
   };
 
@@ -419,9 +430,11 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
             <canvas
               ref={canvasRef}
               className="w-full h-[260px] bg-white touch-none"
+              style={{ touchAction: 'none', msTouchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' } as React.CSSProperties}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
+              onPointerLeave={onPointerUp}
               onPointerCancel={onPointerUp}
             />
           </div>
