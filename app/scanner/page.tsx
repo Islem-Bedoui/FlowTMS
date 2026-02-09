@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -66,7 +66,7 @@ function fmtDateTime(s?: string) {
   return d.toLocaleString();
 }
 
-export default function ScannerPage() {
+function ScannerInner() {
   const router = useRouter();
   const sp = useSearchParams();
 
@@ -418,5 +418,13 @@ export default function ScannerPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ScannerPage() {
+  return (
+    <Suspense fallback={null}>
+      <ScannerInner />
+    </Suspense>
   );
 }
