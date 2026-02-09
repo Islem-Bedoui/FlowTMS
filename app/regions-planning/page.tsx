@@ -198,16 +198,7 @@ export default function RegionsPlanningPage() {
     }
   }, []);
 
-  function matchesLoggedDriver(tourDriver?: string | null): boolean {
-    const role = (sessionRole || '').trim().toLowerCase();
-    const isDriver = role === 'driver' || role === 'chauffeur';
-    if (!isDriver) return true;
-    const driverNo = (sessionDriverNo || '').trim();
-    if (!driverNo) return true;
-    if (!tourDriver) return false;
-    const norm = (s: string) => String(s).trim().toLowerCase().replace(/\s+/g, '');
-    return norm(tourDriver).includes(norm(driverNo));
-  }
+ 
 
   function exportToursCSV() {
     const rows: string[] = [];
@@ -341,25 +332,45 @@ export default function RegionsPlanningPage() {
     };
     return orders.filter(o => (q ? matchesQuery(o) : true) && matchesDate(o) && matchesCity(o));
   }, [orders, query, orderDate, viewMode, cityFilter]);
+function matchesLoggedDriver(tourDriver?: string | null): boolean {
+  const role = (sessionRole || '').trim().toLowerCase();
+  const isDriver = role === 'driver' || role === 'chauffeur';
+  if (!isDriver) return true;
 
-  const byCity = useMemo(() => {
-    const m: Record<string, Order[]> = {};
-    const filtered = filteredOrders;
-    filtered.forEach(o => {
-      const key = (o.Sell_to_City || "Autres").trim() || "Autres";
-      if (!m[key]) m[key] = [];
-      m[key].push(o);
-    });
-    // sort for deterministic order
-    let entries = Object.entries(m).sort((a,b)=> a[0].localeCompare(b[0]));
-    // Driver/chauffeur: only show tours assigned to the logged driverNo
-    entries = entries.filter(([city]) => matchesLoggedDriver(getTour(city)?.driver));
-    // Limit to max 3 tours per day
-    if (viewMode === 'day') {
-      entries = entries.slice(0, 3);
-    }
-    return entries;
-  }, [filteredOrders, viewMode, assignments, sessionRole, sessionDriverNo]);
+  const driverNo = (sessionDriverNo || '').trim();
+  if (!driverNo) return true;
+  if (!tourDriver) return false;
+
+  const norm = (s: string) =>
+    String(s).trim().toLowerCase().replace(/\s+/g, '');
+
+  return norm(tourDriver).includes(norm(driverNo));
+}
+
+const byCity = useMemo(() => {
+  const m: Record<string, Order[]> = {};
+  const filtered = filteredOrders;
+
+  filtered.forEach(o => {
+    const key = (o.Sell_to_City || "Autres").trim() || "Autres";
+    if (!m[key]) m[key] = [];
+    m[key].push(o);
+  });
+
+  let entries = Object.entries(m).sort((a,b)=> a[0].localeCompare(b[0]));
+
+  entries = entries.filter(([city]) =>
+    matchesLoggedDriver(getTour(city)?.driver)
+  );
+
+  if (viewMode === 'day') {
+    entries = entries.slice(0, 3);
+  }
+
+  return entries;
+
+}, [filteredOrders, viewMode, assignments, sessionRole, sessionDriverNo]);
+
 
   const validation = useMemo(() => {
     const missingDriver: string[] = [];
