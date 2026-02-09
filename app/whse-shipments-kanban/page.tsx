@@ -334,7 +334,7 @@ export default function WhseShipmentsKanbanPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
       <div className="container mx-auto p-4 md:p-6 max-w-7xl">
-        <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
           <div>
             <h1
               className="xp1 text-2xl bg-clip-text text-transparent"
@@ -427,7 +427,7 @@ export default function WhseShipmentsKanbanPage() {
                         style={{ borderColor: "rgba(2,6,23,0.10)", boxShadow: "0 1px 0 rgba(2,6,23,0.04)" }}
                         title={no}
                       >
-                        <div className="flex items-stretch justify-between gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-stretch justify-between gap-2">
                           <div
                             className="w-1 rounded-full mr-2"
                             style={{ backgroundColor: theme.accent }}

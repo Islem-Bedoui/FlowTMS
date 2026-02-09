@@ -570,7 +570,7 @@ export default function RegionsPlanningPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
-      <div className="container mx-auto p-6 max-w-7xl">
+      <div className="container mx-auto p-3 md:p-6 max-w-7xl">
       {/* Header / Controls */}
       <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
         <div>
@@ -614,7 +614,7 @@ export default function RegionsPlanningPage() {
             value={query}
             onChange={(e)=> setQuery(e.target.value)}
             placeholder="Rechercher (ville, N° commande, CP)"
-            className="px-3 py-2 border rounded-lg w-64 shadow-sm bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+            className="px-3 py-2 border rounded-lg w-full md:w-64 shadow-sm bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
           />
           <button onClick={loadOrders} className="px-3 py-2 rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow hover:from-sky-500 hover:to-indigo-500 active:scale-[.99] disabled:opacity-60" disabled={loading}>{loading? 'Chargement…' : 'Recharger'}</button>
           <button onClick={exportToursCSV} className="px-3 py-2 rounded-lg bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">Exporter CSV</button>
@@ -689,8 +689,8 @@ export default function RegionsPlanningPage() {
           const isClosed = !!tour.closed;
           return (
             <div key={city} className={`group bg-white/80 backdrop-blur rounded-2xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200 ring-1 ring-transparent hover:ring-sky-100 ${isClosed ? 'opacity-70' : ''}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <div className="text-sm font-semibold text-slate-900">{city}</div>
                   <span className="text-xs px-2 py-0.5 rounded-full border bg-slate-50 text-slate-700">{list.length} cmd</span>
                   {selectedCount > 0 && (
@@ -703,7 +703,7 @@ export default function RegionsPlanningPage() {
                     <span className="text-[10px] px-2 py-0.5 rounded-full border bg-rose-50 text-rose-700 ml-2">Tournée validée</span>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1">
                   {!isClosed && (
                     <button
                       onClick={() => optimizeCityTour(city, list)}
@@ -741,7 +741,7 @@ export default function RegionsPlanningPage() {
                 </div>
                 <div className="mt-1 text-[10px] text-slate-500">{Math.min(100, Math.round((selectedCount / Math.max(1, list.length)) * 100))}% des commandes sélectionnées</div>
               </div>
-              <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                 {/* Chauffeur dropdown: only show chauffeurs not already assigned to other tours */}
                 <select
                   className="px-2 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
@@ -800,12 +800,12 @@ export default function RegionsPlanningPage() {
                   });
 
                   return orderedList.map((o, idx) => (
-                    <label key={o.No + '-' + idx} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
+                    <label key={o.No + '-' + idx} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
                       <input type="checkbox" className="rounded text-sky-600 focus:ring-sky-500" checked={tour.selectedOrders.includes(o.No)} onChange={()=> toggleOrder(city, o.No)} />
                       <span className="text-slate-800 font-medium">{o.No}</span>
-                      <span className="text-slate-500 ml-auto">{o.Sell_to_Post_Code || ''} {o.Sell_to_City || ''}</span>
-                      <span className="text-xs text-slate-500 ml-2">Vol: {o.volume ?? '-'} m³</span>
-                      <span className="text-xs text-slate-500 ml-2">Cap: {o.capacity ?? '-'} kg</span>
+                      <span className="text-slate-500 ml-auto text-xs">{o.Sell_to_Post_Code || ''} {o.Sell_to_City || ''}</span>
+                      <span className="text-xs text-slate-500">Vol: {o.volume ?? '-'} m³</span>
+                      <span className="text-xs text-slate-500">Cap: {o.capacity ?? '-'} kg</span>
                     </label>
                   ));
                 })()}

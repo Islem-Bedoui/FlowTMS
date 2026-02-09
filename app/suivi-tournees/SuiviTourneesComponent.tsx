@@ -388,7 +388,7 @@ export default function SuiviTourneesComponent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
-      <div className="container mx-auto p-6 max-w-7xl">
+      <div className="container mx-auto p-3 md:p-6 max-w-7xl">
         <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-indigo-600 tracking-tight">Suivi des Tournées</h1>
@@ -667,8 +667,8 @@ export default function SuiviTourneesComponent() {
           {/* Global distribution donut */}
           <div className="bg-white/80 backdrop-blur rounded-2xl border border-slate-200 shadow-sm p-4">
             <div className="mb-3 text-sm font-semibold text-slate-900">Répartition globale des statuts</div>
-            <div className="flex items-center gap-6">
-              <div className="relative h-36 w-36">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div className="relative h-28 w-28 sm:h-36 sm:w-36 shrink-0">
                 {(() => {
                   const total = Math.max(1, globalDistribution.total);
                   const pctLiv = (globalDistribution.liv/total)*100;
@@ -676,9 +676,9 @@ export default function SuiviTourneesComponent() {
                   const pctNon = 100 - pctLiv - pctEn;
                   const grad = `conic-gradient(#10b981 0 ${pctLiv}%, #f59e0b ${pctLiv}% ${pctLiv+pctEn}%, #94a3b8 ${pctLiv+pctEn}% 100%)`;
                   return (
-                    <div className="h-36 w-36 rounded-full" style={{ background: grad }}>
-                      <div className="absolute inset-5 rounded-full bg-white/90 flex items-center justify-center">
-                        <div className="text-lg font-bold text-slate-900">{globalRecap.percent}%</div>
+                    <div className="h-28 w-28 sm:h-36 sm:w-36 rounded-full" style={{ background: grad }}>
+                      <div className="absolute inset-4 sm:inset-5 rounded-full bg-white/90 flex items-center justify-center">
+                        <div className="text-base sm:text-lg font-bold text-slate-900">{globalRecap.percent}%</div>
                       </div>
                     </div>
                   );

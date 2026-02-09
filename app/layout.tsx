@@ -29,6 +29,7 @@ import { ToastProvider, ToastViewport } from "./components/ToastProvider";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
@@ -198,9 +199,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         ) : (
           <ToastProvider>
             <ToastViewport />
-            <div className="flex min-h-screen">
+            <div className="flex min-h-screen relative">
+              {/* Mobile backdrop */}
+              {mobileOpen && (
+                <div
+                  className="fixed inset-0 z-40 bg-black/50 md:hidden"
+                  onClick={() => setMobileOpen(false)}
+                />
+              )}
               {/* Sidebar */}
-              <aside className={`bg-gray-800 text-white h-screen transition-all duration-300 flex flex-col justify-between ${isCollapsed ? "w-20" : "w-64"}`}>
+              <aside className={`bg-gray-800 text-white h-screen transition-all duration-300 flex flex-col justify-between fixed md:sticky top-0 z-50 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 ${isCollapsed ? "w-20" : "w-64"}`}>
                 <div>
                   <div className="flex items-center justify-center px-4 py-4 border-b border-gray-700">
                     <div className="flex items-center gap-2">
@@ -213,6 +221,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       <Link
                         key={item.href}
                         href={item.href}
+                        onClick={() => setMobileOpen(false)}
                         className={`flex items-center gap-3 px-4 py-2 rounded-md transition ${pathname === item.href ? "bg-blue-600" : "hover:bg-gray-700"}`}
                       >
                         <FontAwesomeIcon icon={item.icon} />
@@ -239,10 +248,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </aside>
 
               {/* Main content */}
-              <main className="flex-1 h-screen p-6 bg-gray-100 overflow-auto flex flex-col">
+              <main className="flex-1 h-screen p-3 md:p-6 bg-gray-100 overflow-auto flex flex-col">
                 <div className="flex items-center mb-4">
                   <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    onClick={() => {
+                      if (window.innerWidth < 768) {
+                        setMobileOpen(!mobileOpen);
+                      } else {
+                        setIsCollapsed(!isCollapsed);
+                      }
+                    }}
                     className="text-gray-700 text-lg mr-2"
                   >
                     <FontAwesomeIcon icon={faBars} />
