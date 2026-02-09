@@ -312,7 +312,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                         )}
 
                         <div className="xp-text mt-4 text-slate-500">
-                          Si tu scannes depuis un autre appareil, configure `NEXT_PUBLIC_APP_URL` (ex: https://votre-domaine.com).
+                          Si tu scannes depuis un autre appareil, configure `NEXT_PUBLIC_APP_URL` .
                         </div>
                         <div className="xp-text mt-2">
                           <Link href="/qr" className="text-blue-700 underline" onClick={() => setQrOpen(false)}>
