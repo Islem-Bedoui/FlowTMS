@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { mockOrders } from "../../types/mockOrders";
 
 type CityTour = {
   city: string;
@@ -61,6 +62,10 @@ const cityCoords: Record<string, { lat: number; lng: number }> = {
   Marseille: { lat: 43.2965, lng: 5.3698 },
   Toulouse: { lat: 43.6047, lng: 1.4442 },
   Nice: { lat: 43.7102, lng: 7.262 },
+  Bordeaux: { lat: 44.8378, lng: -0.5792 },
+  Lille: { lat: 50.6292, lng: 3.0573 },
+  Strasbourg: { lat: 48.5734, lng: 7.7521 },
+  Nantes: { lat: 47.2184, lng: -1.5536 },
   Berlin: { lat: 52.52, lng: 13.405 },
   Rome: { lat: 41.9028, lng: 12.4964 },
   Madrid: { lat: 40.4168, lng: -3.7038 },
@@ -135,11 +140,22 @@ export default function DashboardPage() {
     };
   }, []);
 
-  const closedTours = useMemo(() => {
-    const list = Object.values(assignments || {}).filter((t) => t && t.closed);
+  const allTours = useMemo(() => {
+    const list = Object.values(assignments || {}).filter((t) => t && (t.selectedOrders || []).length > 0);
     list.sort((a, b) => String(a.city || "").localeCompare(String(b.city || "")));
     return list;
   }, [assignments]);
+
+  const closedTours = useMemo(() => allTours.filter(t => t.closed), [allTours]);
+
+  const ordersByCity = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const o of mockOrders) {
+      const city = (o.Sell_to_City || "Autres").trim();
+      m[city] = (m[city] || 0) + 1;
+    }
+    return Object.entries(m).sort((a, b) => b[1] - a[1]);
+  }, []);
 
   const podSet = useMemo(() => {
     const s = new Set<string>();
@@ -160,13 +176,13 @@ export default function DashboardPage() {
   }, [returns]);
 
   const global = useMemo(() => {
-    const orders = closedTours.flatMap((t) => t.selectedOrders || []);
+    const orders = allTours.flatMap((t) => t.selectedOrders || []);
     const planned = orders.length;
 
     let delivered = 0;
     let inProgress = 0;
 
-    for (const t of closedTours) {
+    for (const t of allTours) {
       const city = t.city;
       const st = statuses[city] || {};
       for (const o of t.selectedOrders || []) {
@@ -187,8 +203,7 @@ export default function DashboardPage() {
 
     // Oublis: livré mais pas POD ou pas retours
     const missedPod = orders.filter((o) => {
-      // only consider if delivered
-      for (const t of closedTours) {
+      for (const t of allTours) {
         if (!t.selectedOrders?.includes(o)) continue;
         const v = (statuses[t.city] || {})[o];
         return v === "livre" && !podSet.has(o);
@@ -197,7 +212,7 @@ export default function DashboardPage() {
     }).length;
 
     const missedReturns = orders.filter((o) => {
-      for (const t of closedTours) {
+      for (const t of allTours) {
         if (!t.selectedOrders?.includes(o)) continue;
         const v = (statuses[t.city] || {})[o];
         return v === "livre" && !returnsSet.has(o);
@@ -206,7 +221,8 @@ export default function DashboardPage() {
     }).length;
 
     return {
-      tours: closedTours.length,
+      tours: allTours.length,
+      closedTours: closedTours.length,
       planned,
       delivered,
       inProgress,
@@ -219,7 +235,7 @@ export default function DashboardPage() {
       missedPod,
       missedReturns,
     };
-  }, [closedTours, podSet, returnsSet, statuses]);
+  }, [allTours, closedTours, podSet, returnsSet, statuses]);
 
   const byVehicle = useMemo(() => {
     const out: Array<{
@@ -237,7 +253,7 @@ export default function DashboardPage() {
     const m = new Map<string, typeof out[number]>();
     const emissionKgPerKm = 0.9; // estimation camion léger/moyen (à ajuster)
 
-    for (const t of closedTours) {
+    for (const t of allTours) {
       const vehicle = String(t.vehicle || "-").trim() || "-";
       const driver = String(t.driver || "-").trim() || "-";
       const key = `${vehicle}||${driver}`;
@@ -299,209 +315,249 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
-      <div className="container mx-auto p-4 md:p-6 max-w-7xl">
-        <div className="flex items-start justify-between gap-3 mb-5">
-          <div>
-            <h1
-              className="xp1 text-2xl bg-clip-text text-transparent"
-              style={{ backgroundImage: "linear-gradient(90deg, var(--logo-1), var(--logo-3))" }}
-            >
-              Tableau de bord
-            </h1>
-            <div className="xp-text mt-1 text-slate-600">
-              Traçabilité en temps réel • Oublis livraisons/retours • Statistiques par véhicule • RSE (CO₂ estimé)
+      <div className="container mx-auto p-3 md:p-6 max-w-7xl space-y-6">
+
+        {/* ── Hero Header ── */}
+        <div className="relative overflow-hidden rounded-2xl p-6 md:p-8" style={{ background: "linear-gradient(135deg, #4f58a5 0%, #406fb5 40%, #49a2da 100%)" }}>
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Tableau de bord</h1>
+              <p className="mt-1 text-sm text-white/80">Traçabilité en temps réel &bull; Oublis &bull; Statistiques véhicules &bull; RSE</p>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                setAssignments(pickAssignments());
+                setStatuses(pickStatuses());
+              }}
+              className="shrink-0 px-4 py-2 rounded-xl bg-white/20 backdrop-blur text-white text-sm font-medium ring-1 ring-white/30 hover:bg-white/30 transition"
+              title="Recharger depuis le stockage local"
+            >
+              Rafraîchir
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setAssignments(pickAssignments());
-              setStatuses(pickStatuses());
-            }}
-            className="xp-text px-3 py-2 rounded-lg bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
-            title="Recharger depuis le stockage local"
-          >
-            Rafraîchir
-          </button>
+          {loading && <div className="relative mt-3 text-sm text-white/70">Chargement POD / Retours…</div>}
         </div>
 
-        {loading && <div className="xp-text text-slate-500 mb-4">Chargement POD / Retours…</div>}
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-          <div className="lg:col-span-3 p-4 rounded-2xl border bg-white/80" style={{ borderColor: "rgba(79,88,165,0.18)" }}>
-            <div className="xp3 text-slate-600">Tournées validées</div>
-            <div className="xp1 text-3xl" style={{ color: "var(--logo-4)" }}>{global.tours}</div>
-            <div className="xp-text text-slate-500 mt-1">Total stops planifiés: {global.planned}</div>
+        {/* ── Top KPI Row ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Tours card */}
+          <div className="rounded-2xl p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
+            <div className="text-4xl font-extrabold" style={{ color: "var(--logo-1)" }}>{global.tours}</div>
+            <div className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Tournées</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">{global.planned} stops &bull; {global.closedTours} validée(s)</div>
+            <div className="text-[11px] text-slate-400">{mockOrders.length} commandes totales</div>
           </div>
 
-          <div className="lg:col-span-9 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div
-              className="p-4 rounded-2xl border text-slate-800"
-              style={{ borderColor: "rgba(16,185,129,0.28)", backgroundImage: "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(255,255,255,0.85))" }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="xp3 text-slate-600">Livraisons</div>
-                  <div className="xp1 text-3xl">{global.delivered}/{global.planned}</div>
-                  <div className="xp-text text-slate-600">Taux: {fmtPct(global.deliveryRate)}</div>
+          {/* Delivery ring */}
+          <div className="rounded-2xl p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center">
+            <div className="relative h-20 w-20">
+              <div className="h-20 w-20 rounded-full" style={{ background: `conic-gradient(#10b981 ${rings.delivery}%, #e5e7eb 0)` }}>
+                <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
+                  <span className="text-lg font-extrabold text-emerald-600">{fmtPct(global.deliveryRate)}</span>
                 </div>
-                <div
-                  className="w-16 h-16 rounded-full"
-                  style={{
-                    background: `conic-gradient(#10b981 ${rings.delivery}%, rgba(148,163,184,0.35) 0)`,
-                  }}
-                />
-              </div>
-              <div className="mt-3 h-2 rounded-full bg-slate-200/60 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${rings.delivery}%`, backgroundColor: "#10b981" }} />
               </div>
             </div>
+            <div className="mt-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Livraisons</div>
+            <div className="text-[11px] text-slate-400">{global.delivered} / {global.planned}</div>
+          </div>
 
-            <div
-              className="p-4 rounded-2xl border text-slate-800"
-              style={{ borderColor: "rgba(59,130,246,0.28)", backgroundImage: "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(255,255,255,0.85))" }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="xp3 text-slate-600">POD (signatures)</div>
-                  <div className="xp1 text-3xl">{global.signed}/{global.delivered}</div>
-                  <div className="xp-text text-slate-600">Taux: {fmtPct(global.podRate)} • Oublis: {global.missedPod}</div>
+          {/* POD ring */}
+          <div className="rounded-2xl p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center">
+            <div className="relative h-20 w-20">
+              <div className="h-20 w-20 rounded-full" style={{ background: `conic-gradient(#3b82f6 ${rings.pod}%, #e5e7eb 0)` }}>
+                <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
+                  <span className="text-lg font-extrabold text-blue-600">{fmtPct(global.podRate)}</span>
                 </div>
-                <div
-                  className="w-16 h-16 rounded-full"
-                  style={{
-                    background: `conic-gradient(#3b82f6 ${rings.pod}%, rgba(148,163,184,0.35) 0)`,
-                  }}
-                />
-              </div>
-              <div className="mt-3 h-2 rounded-full bg-slate-200/60 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${rings.pod}%`, backgroundColor: "#3b82f6" }} />
               </div>
             </div>
+            <div className="mt-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Signatures POD</div>
+            <div className="text-[11px] text-slate-400">{global.signed} / {global.delivered}{global.missedPod > 0 && <span className="text-rose-500 ml-1">({global.missedPod} oublis)</span>}</div>
+          </div>
 
-            <div
-              className="p-4 rounded-2xl border text-slate-800"
-              style={{ borderColor: "rgba(245,158,11,0.30)", backgroundImage: "linear-gradient(135deg, rgba(245,158,11,0.14), rgba(255,255,255,0.85))" }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="xp3 text-slate-600">Retours saisis</div>
-                  <div className="xp1 text-3xl">{global.returnsDone}/{global.delivered}</div>
-                  <div className="xp-text text-slate-600">Taux: {fmtPct(global.returnsRate)} • Oublis: {global.missedReturns}</div>
+          {/* Returns ring */}
+          <div className="rounded-2xl p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center">
+            <div className="relative h-20 w-20">
+              <div className="h-20 w-20 rounded-full" style={{ background: `conic-gradient(#f59e0b ${rings.ret}%, #e5e7eb 0)` }}>
+                <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
+                  <span className="text-lg font-extrabold text-amber-600">{fmtPct(global.returnsRate)}</span>
                 </div>
-                <div
-                  className="w-16 h-16 rounded-full"
-                  style={{
-                    background: `conic-gradient(#f59e0b ${rings.ret}%, rgba(148,163,184,0.35) 0)`,
-                  }}
-                />
-              </div>
-              <div className="mt-3 h-2 rounded-full bg-slate-200/60 overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${rings.ret}%`, backgroundColor: "#f59e0b" }} />
               </div>
             </div>
+            <div className="mt-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Retours saisis</div>
+            <div className="text-[11px] text-slate-400">{global.returnsDone} / {global.delivered}{global.missedReturns > 0 && <span className="text-rose-500 ml-1">({global.missedReturns} oublis)</span>}</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-3">
-          <div className="p-4 rounded-2xl border bg-white/80 lg:col-span-1" style={{ borderColor: "rgba(79,88,165,0.18)" }}>
-            <div className="xp2" style={{ color: "var(--logo-4)" }}>Traçabilité (statuts)</div>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              <div className="p-3 rounded-xl bg-slate-50">
-                <div className="xp3 text-slate-600">Non démarré</div>
-                <div className="xp1 text-2xl" style={{ color: "var(--logo-4)" }}>{global.notStarted}</div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-50">
-                <div className="xp3 text-slate-600">En cours</div>
-                <div className="xp1 text-2xl" style={{ color: "var(--logo-4)" }}>{global.inProgress}</div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-50">
-                <div className="xp3 text-slate-600">Livré</div>
-                <div className="xp1 text-2xl" style={{ color: "var(--logo-4)" }}>{global.delivered}</div>
-              </div>
-            </div>
-            <div className="mt-3 h-3 rounded-full bg-slate-200/60 overflow-hidden">
-              {(() => {
-                const total = Math.max(1, global.planned);
-                const pNon = (global.notStarted / total) * 100;
-                const pEn = (global.inProgress / total) * 100;
-                const pLiv = (global.delivered / total) * 100;
-                return (
-                  <div className="flex h-full">
-                    <div style={{ width: `${pNon}%`, backgroundColor: "#94a3b8" }} />
-                    <div style={{ width: `${pEn}%`, backgroundColor: "#8b5cf6" }} />
-                    <div style={{ width: `${pLiv}%`, backgroundColor: "#10b981" }} />
-                  </div>
-                );
-              })()}
-            </div>
-            <div className="xp-text text-slate-600 mt-2">
-              Objectif: suppression des oublis + suivi temps réel.
+        {/* ── Status Distribution ── */}
+        <div className="rounded-2xl bg-white shadow-sm border border-slate-100 p-5 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Répartition des statuts</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Suivi en temps réel de toutes les commandes</p>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl border bg-white/80 lg:col-span-2" style={{ borderColor: "rgba(79,88,165,0.18)" }}>
-            <div className="xp2" style={{ color: "var(--logo-4)" }}>Véhicules (optimisation logistique & RSE)</div>
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="rounded-xl p-4 text-center" style={{ background: "linear-gradient(135deg, rgba(148,163,184,0.12), rgba(148,163,184,0.04))" }}>
+              <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-200/60 mb-2">
+                <span className="text-lg">⏳</span>
+              </div>
+              <div className="text-2xl font-extrabold text-slate-700">{global.notStarted}</div>
+              <div className="text-[11px] font-medium text-slate-500 mt-0.5">Non démarré</div>
+            </div>
+            <div className="rounded-xl p-4 text-center" style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(139,92,246,0.04))" }}>
+              <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-violet-200/60 mb-2">
+                <span className="text-lg">🚚</span>
+              </div>
+              <div className="text-2xl font-extrabold text-violet-700">{global.inProgress}</div>
+              <div className="text-[11px] font-medium text-slate-500 mt-0.5">En cours</div>
+            </div>
+            <div className="rounded-xl p-4 text-center" style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04))" }}>
+              <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-200/60 mb-2">
+                <span className="text-lg">✅</span>
+              </div>
+              <div className="text-2xl font-extrabold text-emerald-700">{global.delivered}</div>
+              <div className="text-[11px] font-medium text-slate-500 mt-0.5">Livré</div>
+            </div>
+          </div>
+
+          {/* Stacked bar */}
+          <div className="h-4 rounded-full bg-slate-100 overflow-hidden flex">
+            {(() => {
+              const total = Math.max(1, global.planned);
+              const pNon = (global.notStarted / total) * 100;
+              const pEn = (global.inProgress / total) * 100;
+              const pLiv = (global.delivered / total) * 100;
+              return (
+                <>
+                  <div className="h-full transition-all duration-700" style={{ width: `${pLiv}%`, background: "linear-gradient(90deg, #10b981, #34d399)" }} />
+                  <div className="h-full transition-all duration-700" style={{ width: `${pEn}%`, background: "linear-gradient(90deg, #8b5cf6, #a78bfa)" }} />
+                  <div className="h-full transition-all duration-700" style={{ width: `${pNon}%`, background: "linear-gradient(90deg, #94a3b8, #cbd5e1)" }} />
+                </>
+              );
+            })()}
+          </div>
+          <div className="flex flex-wrap items-center gap-4 mt-3 text-[11px] text-slate-500">
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Livré</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-violet-500" /> En cours</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Non démarré</span>
+          </div>
+        </div>
+
+        {/* ── Vehicles & RSE ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Km chart */}
+          <div className="rounded-2xl bg-white shadow-sm border border-slate-100 p-5 md:p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-1">Distance par véhicule</h2>
+            <p className="text-xs text-slate-500 mb-4">Km estimés (aller-retour dépôt)</p>
             {byVehicle.length === 0 ? (
-              <div className="xp-text text-slate-500 mt-2">Aucune tournée validée.</div>
+              <div className="text-sm text-slate-400 py-8 text-center">Aucune tournée validée</div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                <div className="rounded-xl border bg-white overflow-hidden" style={{ borderColor: "rgba(79,88,165,0.14)" }}>
-                  <div className="px-3 py-2 bg-slate-50 text-slate-700 xp3">Km estimés par véhicule</div>
-                  <div className="p-3">
-                    {byVehicle.slice(0, 6).map((r) => {
-                      const w = maxKm <= 0 ? 0 : (r.kmEst / maxKm) * 100;
-                      return (
-                        <div key={`km-${r.vehicle}||${r.driver}`} className="mb-2">
-                          <div className="flex items-center justify-between text-xs text-slate-600">
-                            <div className="font-medium text-slate-800">{r.vehicle}</div>
-                            <div>{r.kmEst.toFixed(0)} km</div>
-                          </div>
-                          <div className="h-2 rounded-full bg-slate-200/60 overflow-hidden mt-1">
-                            <div className="h-full rounded-full" style={{ width: `${w}%`, backgroundImage: "linear-gradient(90deg, #0ea5e9, #3b82f6)" }} />
-                          </div>
+              <div className="space-y-3">
+                {byVehicle.slice(0, 8).map((r, i) => {
+                  const w = maxKm <= 0 ? 0 : (r.kmEst / maxKm) * 100;
+                  const colors = [
+                    "linear-gradient(90deg, #4f58a5, #49a2da)",
+                    "linear-gradient(90deg, #0ea5e9, #38bdf8)",
+                    "linear-gradient(90deg, #6366f1, #818cf8)",
+                    "linear-gradient(90deg, #8b5cf6, #a78bfa)",
+                  ];
+                  return (
+                    <div key={`km-${r.vehicle}||${r.driver}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center justify-center h-6 w-6 rounded-md text-[10px] font-bold text-white" style={{ background: colors[i % colors.length] }}>{i + 1}</span>
+                          <span className="text-xs font-semibold text-slate-800 truncate max-w-[160px]">{r.vehicle}</span>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="overflow-auto rounded-xl border" style={{ borderColor: "rgba(79,88,165,0.14)" }}>
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50 text-slate-700">
-                      <tr className="text-left">
-                        <th className="xp3 px-3 py-2">Véhicule</th>
-                        <th className="xp3 px-3 py-2">Livraison</th>
-                        <th className="xp3 px-3 py-2">POD</th>
-                        <th className="xp3 px-3 py-2">Retours</th>
-                        <th className="xp3 px-3 py-2">CO₂</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white">
-                      {byVehicle.map((r) => {
-                        const deliveryRate = r.planned === 0 ? 0 : (r.delivered / r.planned) * 100;
-                        const podRate = r.delivered === 0 ? 0 : (r.signed / r.delivered) * 100;
-                        const returnsRate = r.delivered === 0 ? 0 : (r.returnsDone / r.delivered) * 100;
-                        return (
-                          <tr key={`${r.vehicle}||${r.driver}`} className="border-t" style={{ borderColor: "rgba(2,6,23,0.06)" }}>
-                            <td className="xp-text px-3 py-2 font-semibold" style={{ color: "var(--logo-4)" }}>{r.vehicle}</td>
-                            <td className="xp-text px-3 py-2 text-slate-700">{fmtPct(deliveryRate)}</td>
-                            <td className="xp-text px-3 py-2 text-slate-700">{fmtPct(podRate)}</td>
-                            <td className="xp-text px-3 py-2 text-slate-700">{fmtPct(returnsRate)}</td>
-                            <td className="xp-text px-3 py-2 text-slate-700">{r.co2EstKg.toFixed(0)} kg</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                        <span className="text-xs font-medium text-slate-600">{r.kmEst.toFixed(0)} km</span>
+                      </div>
+                      <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${w}%`, backgroundImage: colors[i % colors.length] }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
-            <div className="xp-text text-slate-500 mt-2">
-              Note: km/CO₂ sont des **estimations** basées sur la ville (à affiner quand on aura les points exacts).
+          </div>
+
+          {/* Vehicle table */}
+          <div className="rounded-2xl bg-white shadow-sm border border-slate-100 p-5 md:p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-1">Performance & RSE</h2>
+            <p className="text-xs text-slate-500 mb-4">Taux par véhicule et impact carbone</p>
+            {byVehicle.length === 0 ? (
+              <div className="text-sm text-slate-400 py-8 text-center">Aucune tournée validée</div>
+            ) : (
+              <div className="overflow-auto rounded-xl border border-slate-100">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500" style={{ background: "linear-gradient(135deg, #f8fafc, #f1f5f9)" }}>
+                      <th className="px-3 py-2.5 font-semibold">Véhicule</th>
+                      <th className="px-3 py-2.5 font-semibold">Livraison</th>
+                      <th className="px-3 py-2.5 font-semibold">POD</th>
+                      <th className="px-3 py-2.5 font-semibold">Retours</th>
+                      <th className="px-3 py-2.5 font-semibold">CO₂</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {byVehicle.map((r, i) => {
+                      const deliveryRate = r.planned === 0 ? 0 : (r.delivered / r.planned) * 100;
+                      const podRate = r.delivered === 0 ? 0 : (r.signed / r.delivered) * 100;
+                      const returnsRate = r.delivered === 0 ? 0 : (r.returnsDone / r.delivered) * 100;
+                      const pillColor = (v: number) => v >= 80 ? "bg-emerald-100 text-emerald-700" : v >= 50 ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700";
+                      return (
+                        <tr key={`${r.vehicle}||${r.driver}`} className={`border-t border-slate-100 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
+                          <td className="px-3 py-2.5">
+                            <div className="font-semibold text-xs" style={{ color: "var(--logo-4)" }}>{r.vehicle}</div>
+                            <div className="text-[10px] text-slate-400">{r.driver}</div>
+                          </td>
+                          <td className="px-3 py-2.5"><span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${pillColor(deliveryRate)}`}>{fmtPct(deliveryRate)}</span></td>
+                          <td className="px-3 py-2.5"><span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${pillColor(podRate)}`}>{fmtPct(podRate)}</span></td>
+                          <td className="px-3 py-2.5"><span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${pillColor(returnsRate)}`}>{fmtPct(returnsRate)}</span></td>
+                          <td className="px-3 py-2.5 text-xs text-slate-600 font-medium">{r.co2EstKg.toFixed(0)} kg</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="text-[11px] text-slate-400 mt-3">
+              km/CO₂ sont des estimations basées sur la distance ville (haversine).
             </div>
           </div>
         </div>
+
+        {/* ── Orders by City ── */}
+        <div className="rounded-2xl bg-white shadow-sm border border-slate-100 p-5 md:p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-1">Commandes par ville</h2>
+          <p className="text-xs text-slate-500 mb-4">{mockOrders.length} commandes au total</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {ordersByCity.map(([city, count]) => {
+              const tour = assignments[city];
+              const isValidated = !!tour?.closed;
+              const hasAssignment = !!(tour && (tour.selectedOrders || []).length > 0);
+              return (
+                <div key={city} className="rounded-xl p-4 border border-slate-100 relative overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(79,88,165,0.06), rgba(73,162,218,0.06))" }}>
+                  <div className="text-lg font-extrabold" style={{ color: "var(--logo-1)" }}>{count}</div>
+                  <div className="text-xs font-semibold text-slate-700 mt-0.5">{city}</div>
+                  <div className="mt-2">
+                    {isValidated ? (
+                      <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Validée</span>
+                    ) : hasAssignment ? (
+                      <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-medium">En préparation</span>
+                    ) : (
+                      <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">Non planifiée</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
     </div>
   );

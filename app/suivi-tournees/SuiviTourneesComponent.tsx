@@ -264,6 +264,36 @@ export default function SuiviTourneesComponent() {
   }, [returns]);
 
   const closeExecutionTour = (city: string) => {
+    const tour = assignments[city];
+    if (!tour) return;
+    const selectedNos = new Set(tour.selectedOrders || []);
+    const cityOrders = orders.filter(o => (o.Sell_to_City || "Autres").trim() === city && selectedNos.has(o.No));
+    const st = statuses[city] || {};
+    const includeRet = tour.includeReturns !== false;
+
+    // Check all orders are "livré"
+    const notDelivered = cityOrders.filter(o => st[o.No] !== 'livre');
+    if (notDelivered.length > 0) {
+      alert(`Impossible de clôturer : ${notDelivered.length} commande(s) non livrée(s) (${notDelivered.map(o => o.No).join(', ')})`);
+      return;
+    }
+
+    // Check all orders have POD signature
+    const missingPod = cityOrders.filter(o => !podSet.has(o.No));
+    if (missingPod.length > 0) {
+      alert(`Impossible de clôturer : signature POD manquante pour ${missingPod.length} commande(s) (${missingPod.map(o => o.No).join(', ')})`);
+      return;
+    }
+
+    // Check returns if required
+    if (includeRet) {
+      const missingRet = cityOrders.filter(o => !returnsSet.has(o.No));
+      if (missingRet.length > 0) {
+        alert(`Impossible de clôturer : retours manquants pour ${missingRet.length} commande(s) (${missingRet.map(o => o.No).join(', ')})`);
+        return;
+      }
+    }
+
     setAssignments((prev) => {
       const next = { ...prev };
       const t = next[city];
@@ -463,7 +493,7 @@ export default function SuiviTourneesComponent() {
             const driverIsOccupied = /occup[ée]/i.test(driverRaw);
             const driverClean = driverRaw.replace(/\s*\(\s*occup[ée]\s*\)\s*/gi, ' ').replace(/\s+/g, ' ').trim();
             return (
-              <div key={city} className="group bg-white/80 backdrop-blur rounded-2xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-all duration-200">
+              <div key={city} className={`group bg-white/80 backdrop-blur rounded-2xl border shadow-sm p-4 hover:shadow-md transition-all duration-200 ${execClosed ? 'border-emerald-300 opacity-80' : 'border-slate-200'}`}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="relative h-14 w-14 rounded-full shrink-0" style={{
@@ -474,7 +504,14 @@ export default function SuiviTourneesComponent() {
                       </div>
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-semibold text-slate-900">{city}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-slate-900">{city}</span>
+                        {execClosed ? (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-600 text-white font-medium">Clôturée</span>
+                        ) : (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-600 text-white font-medium">En cours</span>
+                        )}
+                      </div>
                       <div className="text-[11px] text-slate-500">Livré: {delivered} • En cours: {inProgress} • Total: {total}</div>
                       <div className="mt-2 grid gap-1">
                         {!!driverRaw && (
@@ -511,8 +548,8 @@ export default function SuiviTourneesComponent() {
                           </span>
                         )}
                         {execClosed && (
-                          <span className="text-[11px] px-2 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200">
-                            Tournée terminée
+                          <span className="text-[11px] px-2 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
+                            ✓ Tournée clôturée
                           </span>
                         )}
                         {proofLoading && (
@@ -536,14 +573,15 @@ export default function SuiviTourneesComponent() {
                     {showMap ? 'Masquer carte' : 'Carte'}
                   </button>
 
-                  <button
-                    onClick={() => closeExecutionTour(city)}
-                    disabled={execClosed || !allOk}
-                    className={`px-3 py-1.5 rounded-lg text-xs ring-1 ${execClosed ? 'bg-emerald-600 text-white ring-emerald-600' : allOk ? 'bg-indigo-600 text-white ring-indigo-600 hover:bg-indigo-500' : 'bg-slate-100 text-slate-400 ring-slate-200 cursor-not-allowed'}`}
-                    title={execClosed ? 'Tournée déjà terminée' : allOk ? 'Clôturer la tournée (anti-oubli OK)' : 'Impossible: livraisons/POD/retours manquants'}
-                  >
-                    Terminer la tournée
-                  </button>
+                  {!execClosed && (
+                    <button
+                      onClick={() => closeExecutionTour(city)}
+                      className={`px-3 py-1.5 rounded-lg text-xs ring-1 ${allOk ? 'bg-indigo-600 text-white ring-indigo-600 hover:bg-indigo-500' : 'bg-slate-100 text-slate-400 ring-slate-200 cursor-not-allowed'}`}
+                      title={allOk ? 'Clôturer la tournée' : 'Impossible: livraisons/POD/signatures manquants'}
+                    >
+                      Clôturer la tournée
+                    </button>
+                  )}
                 </div>
 
                 {total > 0 && (

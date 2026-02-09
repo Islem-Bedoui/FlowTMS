@@ -121,48 +121,55 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const navItems = userRole === "admin"
     ? [
         { href: "/dashboard", label: "Tableau de bord", icon: faChartBar },
+        { href: "/expeditions", label: "Expéditions", icon: faBoxes },
 
        // { href: "/planning", label: "Planification & Optimisation", icon: faTruckMoving },
         { href: "/regions-planning", label: "Tournées", icon: faMapMarkedAlt },
         { href: "/suivi-tournees", label: "Suivi des Tournées", icon: faClipboardList },
 
-        { href: "/whse-shipments-kanban", label: "Kanban Entrepôt", icon: faClipboardList },
+        //{ href: "/whse-shipments-kanban", label: "Kanban Entrepôt", icon: faClipboardList },
 
-        { href: "/historique", label: "Historique", icon: faHistory },
+       
         { href: "/suivi", label: "Suivi en Temps Réel", icon: faClock },
-        
+         { href: "/historique", label: "Historique", icon: faHistory },
         //{ href: "/camions-simple", label: "Camions", icon: faTruck },
-        { href: "/chauffeurs", label: "Liste des Chauffeurs", icon: faUserFriends },
+       // { href: "/chauffeurs", label: "Liste des Chauffeurs", icon: faUserFriends },
       //  { href: "/fuel", label: "Journal du Camion", icon: faTruck },  
       //  { href: "/gps", label: "IoT GPS", icon: faSatelliteDish }
       ]
     : userRole === "driver" || userRole === "chauffeur"
     ? [
+        { href: "/expeditions", label: "Expéditions", icon: faBoxes },
         { href: "/regions-planning", label: "Tournées", icon: faMapMarkedAlt },
         { href: "/suivi-tournees", label: "Suivi des Tournées", icon: faClipboardList },
 
-        { href: "/whse-shipments-kanban", label: "Kanban Entrepôt", icon: faClipboardList },
+      //  { href: "/whse-shipments-kanban", label: "Kanban Entrepôt", icon: faClipboardList },
         { href: "/suivi", label: "Suivi en Temps Réel", icon: faClock },
+         { href: "/historique", label: "Historique", icon: faHistory },
       ]
     : userRole === "customer"
     ? [
        
       //  { href: "/camions-simple", label: "Camions", icon: faTruck },
        // { href: "/planning", label: "Planification & Optimisation", icon: faTruckMoving },
+        { href: "/expeditions", label: "Expéditions", icon: faBoxes },
         { href: "/regions-planning", label: " Tournées", icon: faMapMarkedAlt },
         { href: "/suivi-tournees", label: "Suivi des Tournées", icon: faClipboardList },
-        { href: "/historique", label: "Historique", icon: faHistory },
+       
         { href: "/suivi", label: "Suivi en Temps Réel", icon: faClock },
+         { href: "/historique", label: "Historique", icon: faHistory },
       //  { href: "/fuel", label: "Journal du Camion", icon: faTruck },  
        // { href: "/gps", label: "IoT GPS", icon: faSatelliteDish },
        // { href: "/repair", label: "Réparation", icon: faTools }
       ]
       : [
        // { href: "/planning", label: "Planification & Optimisation", icon: faTruckMoving },
+        { href: "/expeditions", label: "Expéditions", icon: faBoxes },
         { href: "/regions-planning", label: "Tournées", icon: faMapMarkedAlt },
          { href: "/suivi-tournees", label: "Suivi des Tournées", icon: faClipboardList },
-        { href: "/historique", label: "Historique", icon: faHistory },
+        
         { href: "/suivi", label: "Suivi en Temps Réel", icon: faClock },
+        { href: "/historique", label: "Historique", icon: faHistory },
        // { href: "/camions-simple", label: "Camions ", icon: faTruck },
        // { href: "/carte", label: "Carte géographique", icon: faMapMarkedAlt },
         //{ href: "/etat", label: "État de Livraison", icon: faClipboardList },

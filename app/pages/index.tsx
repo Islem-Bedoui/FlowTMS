@@ -73,18 +73,18 @@ const LoginPage = () => {
         role = truckRole || "driver";
 
         if (role === "admin") {
-          redirectPath = "/regions-planning";
+          redirectPath = "/dashboard";
           localStorage.removeItem("driverNo");
         } else {
           role = "driver";
           driverNo = String((chauffeur as any)?.No || "").trim();
-          redirectPath = "/regions-planning";
+          redirectPath = "/dashboard";
         }
       } else if (customer) {
         // Assume customer uses same password as in /api/login or skip password check
         // If customer has separate password, add validation here
         role = "customer";
-        redirectPath = "/regions-planning";
+        redirectPath = "/dashboard";
       }
 
       if (user || customer) {

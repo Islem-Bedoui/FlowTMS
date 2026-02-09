@@ -1,7 +1,7 @@
 {
   "shipmentNo": "FR-2025-003",
   "createdAt": "2026-02-06T15:33:08.100Z",
-  "updatedAt": "2026-02-06T15:53:22.244Z",
+  "updatedAt": "2026-02-09T09:08:15.625Z",
   "values": {
     "palettes": 0,
     "caisses": 5,
@@ -11,5 +11,11 @@
   },
   "hasColis": true,
   "hasEmballagesVides": true,
-  "defects": []
+  "defects": [
+    {
+      "itemNo": "BEV-1020",
+      "qty": 2,
+      "reason": "defaut"
+    }
+  ]
 }

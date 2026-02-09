@@ -5,16 +5,20 @@ import { useMemo } from "react";
 
 const cityCoords: Record<string, { lat: number; lng: number }> = {
   Paris: { lat: 48.8566, lng: 2.3522 },
+  Lyon: { lat: 45.7640, lng: 4.8357 },
+  Marseille: { lat: 43.2965, lng: 5.3698 },
+  Toulouse: { lat: 43.6047, lng: 1.4442 },
+  Nice: { lat: 43.7102, lng: 7.2620 },
+  Bordeaux: { lat: 44.8378, lng: -0.5792 },
+  Lille: { lat: 50.6292, lng: 3.0573 },
+  Strasbourg: { lat: 48.5734, lng: 7.7521 },
+  Nantes: { lat: 47.2184, lng: -1.5536 },
   Berlin: { lat: 52.52, lng: 13.405 },
   Rome: { lat: 41.9028, lng: 12.4964 },
   Madrid: { lat: 40.4168, lng: -3.7038 },
   London: { lat: 51.5074, lng: -0.1278 },
   Brussels: { lat: 50.8503, lng: 4.3517 },
   Amsterdam: { lat: 52.3676, lng: 4.9041 },
-  Lyon: { lat: 45.7640, lng: 4.8357 },
-  Marseille: { lat: 43.2965, lng: 5.3698 },
-  Toulouse: { lat: 43.6047, lng: 1.4442 },
-  Nice: { lat: 43.7102, lng: 7.2620 },
 };
 
 const startCoords = { lat: 45.7640, lng: 4.8357 }; // Lyon

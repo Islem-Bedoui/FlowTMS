@@ -62,6 +62,12 @@ function cityCenter(cityRaw: string): Point {
   if (city === 'paris') return { lat: 48.8566, lng: 2.3522 };
   if (city === 'lyon') return { lat: 45.7640, lng: 4.8357 };
   if (city === 'marseille') return { lat: 43.2965, lng: 5.3698 };
+  if (city === 'toulouse') return { lat: 43.6047, lng: 1.4442 };
+  if (city === 'nice') return { lat: 43.7102, lng: 7.2620 };
+  if (city === 'bordeaux') return { lat: 44.8378, lng: -0.5792 };
+  if (city === 'lille') return { lat: 50.6292, lng: 3.0573 };
+  if (city === 'strasbourg') return { lat: 48.5734, lng: 7.7521 };
+  if (city === 'nantes') return { lat: 47.2184, lng: -1.5536 };
   return { lat: 46.2276, lng: 2.2137 }; // France centroid
 }
 
@@ -243,11 +249,22 @@ export default function RegionsPlanningPage() {
     try { await navigator.clipboard.writeText(text); } catch {}
   }
 
+  const spreadOrdersAcrossWeek = (date: string) => {
+    // Spread orders by CITY across Mon-Fri: all orders of the same city share the same day
+    const weekStart = startOfWeekISO(date); // Monday
+    const cities = [...new Set(mockOrders.map(o => (o.Sell_to_City || '').trim()))];
+    const cityDay: Record<string, string> = {};
+    cities.forEach((c, i) => { cityDay[c] = addDaysISO(weekStart, i % 5); });
+    return mockOrders.map(o => ({
+      ...o,
+      Requested_Delivery_Date: cityDay[(o.Sell_to_City || '').trim()] || weekStart,
+    })) as Order[];
+  };
+
   const loadOrders = async () => {
     setLoading(true); setError(null);
     try {
-      // Only use mockOrders for consistency
-      setOrders(mockOrders.map(o => ({ ...o, Requested_Delivery_Date: orderDate })) as Order[]);
+      setOrders(spreadOrdersAcrossWeek(orderDate));
     } catch (e:any) {
       setError(e?.message || "Échec chargement commandes");
     } finally {
@@ -255,7 +272,7 @@ export default function RegionsPlanningPage() {
     }
   };
 
-  useEffect(() => { loadOrders(); }, []);
+  useEffect(() => { if (orderDate) loadOrders(); }, [orderDate]);
 
   useEffect(() => {
     // Load chauffeurs (BC)
@@ -278,13 +295,6 @@ export default function RegionsPlanningPage() {
         setTrucks(list.map((t: any, i: number) => ({ No: t.No, Description: t.Description + (i % 2 === 0 ? ' (disponible)' : ' (entretien)'), License_Plate: t.License_Plate }))); 
       } catch {}
     })();
-    // Inject shared mock orders
-    setTimeout(() => {
-      setOrders(prev => [
-        ...prev,
-        ...mockOrders.map(o => ({ ...o, Requested_Delivery_Date: orderDate }))
-      ]);
-    }, 1000);
   }, [orderDate]);
 
   // Normalize incoming date strings to YYYY-MM-DD when possible (supports DD/MM/YYYY and ISO variants)
@@ -312,6 +322,9 @@ export default function RegionsPlanningPage() {
 
   const filteredOrders = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const hasValidAddress = (o: Order) =>
+      (o.Sell_to_City || '').trim().length > 0 &&
+      (o.Sell_to_Address || '').trim().length > 0;
     const matchesQuery = (o: Order) =>
       (o.Sell_to_City || '').toLowerCase().includes(q) ||
       (o.No || '').toLowerCase().includes(q) ||
@@ -330,7 +343,7 @@ export default function RegionsPlanningPage() {
       if (!cityFilter) return true;
       return (o.Sell_to_City || '').toLowerCase() === cityFilter.toLowerCase();
     };
-    return orders.filter(o => (q ? matchesQuery(o) : true) && matchesDate(o) && matchesCity(o));
+    return orders.filter(o => hasValidAddress(o) && (q ? matchesQuery(o) : true) && matchesDate(o) && matchesCity(o));
   }, [orders, query, orderDate, viewMode, cityFilter]);
 
   const getTour = React.useCallback((city: string): CityTour => {
@@ -455,6 +468,19 @@ export default function RegionsPlanningPage() {
       saveAssignments(next);
       return next;
     });
+
+    // Auto-set all selected orders to "en_cours" in suivi-tournees statuses
+    try {
+      const statusKey = 'regions_planning_status_v1';
+      const rawSt = localStorage.getItem(statusKey) || '{}';
+      const allStatuses: Record<string, Record<string, string>> = JSON.parse(rawSt);
+      if (!allStatuses[city]) allStatuses[city] = {};
+      selectedOrders.forEach((o) => {
+        allStatuses[city][o.No] = 'en_cours';
+      });
+      localStorage.setItem(statusKey, JSON.stringify(allStatuses));
+    } catch {
+    }
 
     try {
       const key = 'whse_shipment_status_v1';
@@ -630,7 +656,7 @@ export default function RegionsPlanningPage() {
           <div className="text-2xl font-bold text-slate-900">{byCity.length}</div>
         </div>
         <div className="bg-white/70 backdrop-blur border rounded-xl p-4 shadow-sm">
-          <div className="text-xs text-slate-500">Commandes (filtrées)</div>
+          <div className="text-xs text-slate-500">{viewMode === 'day' ? 'Commandes du jour' : 'Commandes de la semaine'}</div>
           <div className="text-2xl font-bold text-slate-900">{filteredOrders.length}</div>
         </div>
         <div className="bg-white/70 backdrop-blur border rounded-xl p-4 shadow-sm">
@@ -704,14 +730,6 @@ export default function RegionsPlanningPage() {
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
-                  {!isClosed && (
-                    <button
-                      onClick={() => optimizeCityTour(city, list)}
-                      className="text-xs px-2 py-1 border rounded-lg bg-white text-slate-700 hover:bg-slate-50 transition-colors"
-                      disabled={isClosed || selectedCount < 2}
-                      title={selectedCount < 2 ? 'Sélectionne au moins 2 commandes pour optimiser' : 'Optimiser l\'ordre des stops'}
-                    >Optimiser</button>
-                  )}
                   {!isClosed && (
                     <button
                       onClick={()=> validateTour(city, list)}
