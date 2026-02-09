@@ -15,7 +15,8 @@ type PodRecord = {
   imageDataUrl?: string;
 };
 
-const dataDir = path.join(process.cwd(), "data", "tms");
+const isVercel = !!process.env.VERCEL;
+const dataDir = isVercel ? path.join("/tmp", "tms") : path.join(process.cwd(), "data", "tms");
 const podsDir = path.join(dataDir, "pods");
 
 async function ensureDirs() {

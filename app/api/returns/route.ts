@@ -18,7 +18,8 @@ type ReturnsRecord = {
   defects?: Array<{ itemNo: string; qty: number; reason?: string }>;
 };
 
-const dataDir = path.join(process.cwd(), "data", "tms");
+const isVercel = !!process.env.VERCEL;
+const dataDir = isVercel ? path.join("/tmp", "tms") : path.join(process.cwd(), "data", "tms");
 const returnsDir = path.join(dataDir, "returns");
 
 async function ensureDirs() {
