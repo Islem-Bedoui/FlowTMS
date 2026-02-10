@@ -4,8 +4,8 @@ import { getValidAccessToken } from "../../functions/token";
 const apiUrl = "https://api.businesscentral.dynamics.com/v2.0/38681c7b-907c-49c7-9777-d0e3fabfd826/SandBox/ODataV4/Company(%27CRONUS%20FR%27)/resapi";
 
 export async function GET(req: NextRequest) {
-  const accessToken = await getValidAccessToken();
   try {
+    const accessToken = await getValidAccessToken();
     const options = {
       headers: {
         "Content-Type": "application/json",
@@ -26,9 +26,11 @@ export async function GET(req: NextRequest) {
     const data = await response.json();
     console.log("Received data:", data);
 
+    const items: any[] = Array.isArray((data as any)?.value) ? (data as any).value : [];
+
     // Filter to return only relevant fields including @odata.etag
     const filteredData = {
-      value: data.value.map((item: any) => ({
+      value: items.map((item: any) => ({
         No: item.No,
         Name: item.Name,
         address: item.address,
@@ -43,16 +45,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(filteredData);
   } catch (error: any) {
     console.error("Error occurred:", error.message);
-    return NextResponse.json(
-      { message: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ value: [] });
   }
 }
 
 export async function POST(req: NextRequest) {
-  const accessToken = await getValidAccessToken();
   try {
+    const accessToken = await getValidAccessToken();
     const body = await req.json();
     // Ensure required fields are present
     const payload = {
@@ -97,7 +96,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const accessToken = await getValidAccessToken();
   const { searchParams } = new URL(req.url);
   const no = searchParams.get('No');
 
@@ -106,6 +104,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
+    const accessToken = await getValidAccessToken();
     const body = await req.json();
     // Ensure required fields are present
     const payload = {
@@ -151,7 +150,6 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const accessToken = await getValidAccessToken();
   const { searchParams } = new URL(req.url);
   const no = searchParams.get('No');
 
@@ -160,6 +158,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
+    const accessToken = await getValidAccessToken();
     const options = {
       method: 'DELETE',
       headers: {

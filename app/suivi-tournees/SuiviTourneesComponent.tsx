@@ -143,6 +143,7 @@ export default function SuiviTourneesComponent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const cityParam = (searchParams.get("city") || "").trim();
+  const showClosed = (searchParams.get("showClosed") || "").trim() === "1";
   const [sessionRole, setSessionRole] = useState<string>('');
   const [sessionDriverNo, setSessionDriverNo] = useState<string>('');
 
@@ -334,8 +335,13 @@ export default function SuiviTourneesComponent() {
       m[key].push(o);
     });
     let entries = Object.entries(m).sort((a, b) => a[0].localeCompare(b[0]));
-    // Only show validated tours that are NOT execution-closed (clôturées go to Historique)
-    entries = entries.filter(([city]) => assignments[city]?.closed === true && !assignments[city]?.execClosed);
+    // Only show validated tours; by default hide execution-closed (clôturées go to Historique)
+    entries = entries.filter(([city]) => {
+      const a = assignments[city];
+      if (!a?.closed) return false;
+      if (showClosed) return true;
+      return !a?.execClosed;
+    });
     // Driver/chauffeur: only show tours assigned to the logged driverNo
     entries = entries.filter(([city]) => matchesLoggedDriver(assignments[city]?.driver));
     if (cityParam) {
@@ -349,7 +355,7 @@ export default function SuiviTourneesComponent() {
       }
     }
     return entries;
-  }, [filteredOrders, cityParam, assignments, sessionRole, sessionDriverNo]);
+  }, [filteredOrders, cityParam, assignments, sessionRole, sessionDriverNo, showClosed]);
 
   const startSignatureFlow = (city: string, orderNo: string) => {
     const tour = assignments[city];

@@ -251,7 +251,7 @@ export default function HistoriquePage() {
                           <div className="xp-text text-slate-600">Livraisons: {(t.selectedOrders || []).length}</div>
                         </div>
                         <Link
-                          href={`/suivi-tournees?city=${encodeURIComponent(t.city)}`}
+                          href={`/suivi-tournees?city=${encodeURIComponent(t.city)}&showClosed=1`}
                           className="xp-text px-2 py-1 rounded-lg text-white"
                           style={{ backgroundColor: "var(--logo-1)" }}
                         >
