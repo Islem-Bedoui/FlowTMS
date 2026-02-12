@@ -345,6 +345,8 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
       // Flag immédiat dans localStorage pour éviter les warnings sur Vercel
       if (typeof window !== 'undefined') {
         localStorage.setItem(`signature_${shipmentNo}`, 'true');
+        // Forcer le rechargement des warnings globaux immédiatement
+        window.dispatchEvent(new CustomEvent('proofUpdated', { detail: { type: 'signature', shipmentNo } }));
       }
 
       // Sur Vercel, attendre un peu pour que le fichier soit bien écrit avant de continuer

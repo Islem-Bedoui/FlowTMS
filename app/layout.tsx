@@ -26,6 +26,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "./globals.css";
 import { ToastProvider, ToastViewport } from "./components/ToastProvider";
+import { mockOrders } from "@/types/mockOrders";
 
 type CityTour = {
   driver?: string;
@@ -109,6 +110,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     const assignments = loadJson<Record<string, CityTour>>('regions_planning_assignments_v1', {});
     const statuses = loadJson<CityStatus>('regions_planning_status_v1', {} as CityStatus);
 
+    let cancelled = false;
+
     (async () => {
       try {
         const [podRes, retRes] = await Promise.all([
@@ -143,7 +146,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         for (const [city, tour] of Object.entries(assignments)) {
           const selectedNos = new Set(tour.selectedOrders || []);
-          const cityOrders = orders.filter(o => (o.Sell_to_City || "Autres").trim() === city && selectedNos.has(o.No));
+          const cityOrders = orders.filter((o: any) => (o.Sell_to_City || "Autres").trim() === city && selectedNos.has(o.No));
           const st = statuses[city] || {};
           const includeRet = tour.includeReturns !== false;
 
@@ -218,33 +221,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     setUserRole(role);
     setUserName(userName);
 
-    // Sur Vercel, forcer un rechargement des warnings au focus et toutes les 30s
-    const forceWarningsReload = () => {
-      window.dispatchEvent(new Event('storage'));
+    // Écouter l'événement custom de mise à jour des preuves
+    const handleProofUpdate = () => {
+      // Forcer le rechargement immédiat des warnings
+      setGlobalWarnings([]);
+      setTimeout(() => {
+        window.dispatchEvent(new Event('storage'));
+      }, 100);
     };
 
-    const onFocus = () => {
-      forceWarningsReload();
-    };
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        forceWarningsReload();
-      }
-    };
-
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibility);
-
-    // Intervalle toutes les 30s sur Vercel pour rafraîchir les warnings
-    let interval: NodeJS.Timeout;
-    if (process.env.VERCEL) {
-      interval = setInterval(forceWarningsReload, 30000);
-    }
+    window.addEventListener('proofUpdated', handleProofUpdate);
 
     return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibility);
-      if (interval) clearInterval(interval);
+      window.removeEventListener('proofUpdated', handleProofUpdate);
     };
   }, [pathname, router]);
 

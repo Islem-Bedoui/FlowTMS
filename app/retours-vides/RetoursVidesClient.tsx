@@ -246,6 +246,8 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
       // Flag immédiat dans localStorage pour éviter les warnings sur Vercel
       if (typeof window !== 'undefined') {
         localStorage.setItem(`returns_${shipmentNo}`, 'true');
+        // Forcer le rechargement des warnings globaux immédiatement
+        window.dispatchEvent(new CustomEvent('proofUpdated', { detail: { type: 'returns', shipmentNo } }));
       }
 
       if (nextUrl) {
