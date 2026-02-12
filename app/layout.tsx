@@ -101,37 +101,45 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         const retJson = await retRes.json();
         const pods = Array.isArray(podJson?.records) ? podJson.records : [];
         const returns = Array.isArray(retJson?.records) ? retJson.records : [];
+        const orders = Array.isArray(mockOrders) ? mockOrders : [];
 
         const podSet = new Set<string>();
         for (const r of pods) {
           const k = String(r?.shipmentNo || '').trim();
           if (k) podSet.add(k);
         }
+
         const returnsSet = new Set<string>();
         for (const r of returns) {
           const k = String(r?.shipmentNo || '').trim();
           if (k) returnsSet.add(k);
         }
 
-        const hasProofKey = (set: Set<string>, orderNo: string): boolean => {
-          const no = String(orderNo || '').trim();
-          if (!no) return false;
-          if (set.has(no)) return true;
-          const whs = `WHS-${no}`;
-          if (set.has(whs)) return true;
-          if (no.toUpperCase().startsWith('WHS-') && set.has(no.slice(4))) return true;
-          return false;
-        };
+        const missingPOD: string[] = [];
+        const missingReturns: string[] = [];
+
+        // Sur Vercel, attendre un peu avant de calculer les warnings pour laisser les fichiers s'écrire
+        if (process.env.VERCEL) {
+          await new Promise(r => setTimeout(r, 400));
+        }
+
+        for (const [city, tour] of Object.entries(assignments)) {
+          const selectedNos = new Set(tour.selectedOrders || []);
+          const cityOrders = orders.filter(o => (o.Sell_to_City || "Autres").trim() === city && selectedNos.has(o.No));
+          const st = statuses[city] || {};
+          const includeRet = tour.includeReturns !== false;
+
+          for (const o of cityOrders) {
+            const delivered = st[o.No] === 'livre';
+            if (!delivered) continue;
+            if (!hasProofKey(podSet, o.No)) missingPOD.push(o.No);
+            if (includeRet && !hasProofKey(returnsSet, o.No)) missingReturns.push(o.No);
+          }
+        }
 
         const byDriver: Record<string, { podMissing: Set<string>; returnsMissing: Set<string> }> = {};
-
-        for (const [city, tour] of Object.entries(assignments || {})) {
-          if (!tour?.closed) continue;
-          if (!matchesLoggedDriver(tour?.driver)) continue;
-
-          const plannedNos = new Set<string>((tour?.selectedOrders || []).map((x) => String(x || '').trim()).filter(Boolean));
-          if (plannedNos.size === 0) continue;
-
+        for (const [city, tour] of Object.entries(assignments)) {
+          const plannedNos = new Set(tour.selectedOrders || []);
           const stCity = statuses?.[city] || {};
           const includeReturns = tour?.includeReturns !== false;
           const driverLabel = String(tour?.driver || 'Chauffeur inconnu').trim() || 'Chauffeur inconnu';
@@ -169,6 +177,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           setGlobalWarningsVisible(true);
         }
       } catch {
+        if (!cancelled) {
+          setGlobalWarnings([]);
+          setGlobalWarningsVisible(false);
+        }
       }
     })();
   }, [pathname]);

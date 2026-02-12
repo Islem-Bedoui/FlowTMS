@@ -342,6 +342,11 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
       if (!res.ok) throw new Error(json?.error || "Erreur enregistrement");
       setRecord(json.record || null);
 
+      // Sur Vercel, attendre un peu pour que le fichier soit bien écrit avant de continuer
+      if (process.env.VERCEL) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+
       // Chain workflow: Signature -> Retours (if included) -> back to suivi via nextUrl
       if (skipReturns) {
         // Skip retours, go directly back

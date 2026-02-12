@@ -247,7 +247,7 @@ export default function SuiviTourneesComponent() {
   const reloadAll = async () => {
     await loadOrders();
     // Petite pause pour laisser Vercel écrire/lire les fichiers dans /tmp
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, process.env.VERCEL ? 800 : 300));
     await loadProofs();
   };
 
