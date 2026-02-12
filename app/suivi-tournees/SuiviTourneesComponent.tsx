@@ -184,7 +184,7 @@ export default function SuiviTourneesComponent() {
     }
   }, [searchParams]);
 
-  const loadProofs = useCallback(async () => {
+  const loadProofs = useCallback(async (retryCount = 0) => {
     setProofLoading(true);
     try {
       const [podRes, retRes] = await Promise.all([
@@ -193,8 +193,18 @@ export default function SuiviTourneesComponent() {
       ]);
       const podJson = await podRes.json();
       const retJson = await retRes.json();
-      setPods((podJson.records || []) as PodRecord[]);
-      setReturns((retJson.records || []) as ReturnsRecord[]);
+      const newPods = (podJson.records || []) as PodRecord[];
+      const newReturns = (retJson.records || []) as ReturnsRecord[];
+      setPods(newPods);
+      setReturns(newReturns);
+
+      // Sur Vercel, si c'est le premier chargement et qu'on a des POD/retours, vérifier si les warnings doivent être mis à jour
+      if (process.env.VERCEL && retryCount === 0 && (newPods.length > 0 || newReturns.length > 0)) {
+        // Forcer un rechargement des warnings globaux après un court délai
+        setTimeout(() => {
+          window.dispatchEvent(new Event('storage'));
+        }, 200);
+      }
     } catch {
       setPods([]);
       setReturns([]);
@@ -248,7 +258,15 @@ export default function SuiviTourneesComponent() {
     await loadOrders();
     // Petite pause pour laisser Vercel écrire/lire les fichiers dans /tmp
     await new Promise(r => setTimeout(r, process.env.VERCEL ? 800 : 300));
-    await loadProofs();
+    await loadProofs(0);
+    
+    // Sur Vercel, si après le premier chargement il y a encore des warnings, retenter jusqu'à 3 fois
+    if (process.env.VERCEL) {
+      for (let i = 1; i <= 3; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        await loadProofs(i);
+      }
+    }
   };
 
   useEffect(() => {

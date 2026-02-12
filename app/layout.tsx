@@ -195,25 +195,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       return;
     }
 
-    if (role === "admin") return;
+    const driverNo = (localStorage.getItem("driverNo") || "").trim();
+    const userName = (localStorage.getItem("userName") || "").trim() || (role === "admin" ? "Admin" : driverNo ? `Chauffeur ${driverNo}` : "Utilisateur");
+    setUserRole(role);
+    setUserName(userName);
 
-    const driverAllowed = new Set([
-      "/regions-planning",
-      "/suivi-tournees",
-      "/sales-shipments",
-      "/pod-signature",
-      "/retours-vides",
-      "/suivi",
-      "/historique",
-      "/historique-signatures",
-      "/historique-retours",
-      "/whse-shipments-kanban",
-    ]);
+    // Sur Vercel, forcer un rechargement des warnings au focus et toutes les 30s
+    const forceWarningsReload = () => {
+      window.dispatchEvent(new Event('storage'));
+    };
 
-    const isAllowed = driverAllowed.has(pathname);
-    if ((role === "driver" || role === "chauffeur") && !isAllowed) {
-      router.push("/regions-planning");
+    const onFocus = () => {
+      forceWarningsReload();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        forceWarningsReload();
+      }
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    // Intervalle toutes les 30s sur Vercel pour rafraîchir les warnings
+    let interval: NodeJS.Timeout;
+    if (process.env.VERCEL) {
+      interval = setInterval(forceWarningsReload, 30000);
     }
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (interval) clearInterval(interval);
+    };
   }, [pathname, router]);
 
   useEffect(() => {
