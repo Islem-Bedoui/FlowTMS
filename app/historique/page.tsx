@@ -101,7 +101,7 @@ export default function HistoriquePage() {
     const s = String(shipmentNoRaw || "").trim();
     if (!s) return false;
     const unprefixed = s.startsWith("WHS-") ? s.slice(4) : s;
-    return mockNoSet.has(unprefixed) || mockNoSet.has(s);
+    return mockNoSet.has(unprefixed) || mockNoSet.has(s) || s.startsWith("S-") || s.startsWith("WHS-");
   };
 
   const allowedOrderNosForDriver = useMemo(() => {

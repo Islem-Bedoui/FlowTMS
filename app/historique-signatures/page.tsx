@@ -93,10 +93,31 @@ export default function HistoriqueSignaturesPage() {
       const k = String(r?.shipmentNo || "").trim();
       if (k) signedSet.add(k);
     }
-    return shipments.filter((s) => {
+    
+    // Filtrer les shipments qui ont une signature
+    const shipmentsWithSignature = shipments.filter((s) => {
       const no = String(s?.no || "").trim();
       return no && signedSet.has(no);
     });
+    
+    // Créer des shipments virtuels pour les signatures sans shipment réel
+    const virtualShipments: SalesShipment[] = [];
+    for (const r of records) {
+      const shipmentNo = String(r?.shipmentNo || "").trim();
+      // Vérifier si ce shipment n'existe pas déjà dans les shipments réels
+      const existsInReal = shipments.some(s => String(s?.no || "").trim() === shipmentNo);
+      if (shipmentNo && !existsInReal) {
+        // Cette signature n'a pas de shipment correspondant, on en crée un virtuel
+        virtualShipments.push({
+          no: shipmentNo,
+          sellToCustomerName: r?.signedBy || "Client inconnu",
+          postingDate: r?.createdAt ? new Date(r.createdAt).toISOString().split('T')[0] : "",
+          orderNo: "",
+        });
+      }
+    }
+    
+    return [...shipmentsWithSignature, ...virtualShipments];
   }, [records, shipments]);
 
   const filtered = useMemo(() => {

@@ -294,9 +294,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
        
         { href: "/suivi", label: "Suivi en Temps Réel", icon: faClock },
-         { href: "/historique", label: "Historique", icon: faHistory },
-        //{ href: "/camions-simple", label: "Camions", icon: faTruck },
-       // { href: "/chauffeurs", label: "Liste des Chauffeurs", icon: faUserFriends },
+     
+        { href: "/camions-simple", label: "Camions", icon: faTruck },
+        { href: "/chauffeurs", label: "Liste des Chauffeurs", icon: faUserFriends },
+        { href: "/historique", label: "Historique", icon: faHistory },
       //  { href: "/fuel", label: "Journal du Camion", icon: faTruck },  
       //  { href: "/gps", label: "IoT GPS", icon: faSatelliteDish }
       ]
