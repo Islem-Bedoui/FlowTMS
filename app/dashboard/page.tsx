@@ -179,6 +179,16 @@ export default function DashboardPage() {
     const orders = allTours.flatMap((t) => t.selectedOrders || []);
     const planned = orders.length;
 
+    const hasProofKey = (set: Set<string>, orderNo: string): boolean => {
+      const no = String(orderNo || "").trim();
+      if (!no) return false;
+      if (set.has(no)) return true;
+      const whs = `WHS-${no}`;
+      if (set.has(whs)) return true;
+      if (no.toUpperCase().startsWith("WHS-") && set.has(no.slice(4))) return true;
+      return false;
+    };
+
     let delivered = 0;
     let inProgress = 0;
 
@@ -194,19 +204,29 @@ export default function DashboardPage() {
 
     const notStarted = Math.max(0, planned - delivered - inProgress);
 
-    const signed = orders.filter((o) => podSet.has(o)).length;
-    const returnsDone = orders.filter((o) => returnsSet.has(o)).length;
+    // POD/Retours rates must be based on DELIVERED orders only
+    let signed = 0;
+    let returnsDone = 0;
+    for (const t of allTours) {
+      const st = statuses[t.city] || {};
+      for (const o of t.selectedOrders || []) {
+        if (st[o] !== "livre") continue;
+        if (hasProofKey(podSet, o)) signed++;
+        if (hasProofKey(returnsSet, o)) returnsDone++;
+      }
+    }
 
-    const deliveryRate = planned === 0 ? 0 : (delivered / planned) * 100;
-    const podRate = delivered === 0 ? 0 : (signed / delivered) * 100;
-    const returnsRate = delivered === 0 ? 0 : (returnsDone / delivered) * 100;
+    const clampPct = (v: number) => Math.max(0, Math.min(100, v));
+    const deliveryRate = planned === 0 ? 0 : clampPct((delivered / planned) * 100);
+    const podRate = delivered === 0 ? 0 : clampPct((signed / delivered) * 100);
+    const returnsRate = delivered === 0 ? 0 : clampPct((returnsDone / delivered) * 100);
 
     // Oublis: livré mais pas POD ou pas retours
     const missedPod = orders.filter((o) => {
       for (const t of allTours) {
         if (!t.selectedOrders?.includes(o)) continue;
         const v = (statuses[t.city] || {})[o];
-        return v === "livre" && !podSet.has(o);
+        return v === "livre" && !hasProofKey(podSet, o);
       }
       return false;
     }).length;
@@ -215,7 +235,7 @@ export default function DashboardPage() {
       for (const t of allTours) {
         if (!t.selectedOrders?.includes(o)) continue;
         const v = (statuses[t.city] || {})[o];
-        return v === "livre" && !returnsSet.has(o);
+        return v === "livre" && !hasProofKey(returnsSet, o);
       }
       return false;
     }).length;
@@ -253,6 +273,16 @@ export default function DashboardPage() {
     const m = new Map<string, typeof out[number]>();
     const emissionKgPerKm = 0.9; // estimation camion léger/moyen (à ajuster)
 
+    const hasProofKey = (set: Set<string>, orderNo: string): boolean => {
+      const no = String(orderNo || "").trim();
+      if (!no) return false;
+      if (set.has(no)) return true;
+      const whs = `WHS-${no}`;
+      if (set.has(whs)) return true;
+      if (no.toUpperCase().startsWith("WHS-") && set.has(no.slice(4))) return true;
+      return false;
+    };
+
     for (const t of allTours) {
       const vehicle = String(t.vehicle || "-").trim() || "-";
       const driver = String(t.driver || "-").trim() || "-";
@@ -279,8 +309,9 @@ export default function DashboardPage() {
       const st = statuses[t.city] || {};
       for (const o of t.selectedOrders || []) {
         if (st[o] === "livre") row.delivered += 1;
-        if (podSet.has(o)) row.signed += 1;
-        if (returnsSet.has(o)) row.returnsDone += 1;
+        // Count POD/returns only when delivered to avoid >100% rates
+        if (st[o] === "livre" && hasProofKey(podSet, o)) row.signed += 1;
+        if (st[o] === "livre" && hasProofKey(returnsSet, o)) row.returnsDone += 1;
       }
 
       const coord = cityCoords[t.city];

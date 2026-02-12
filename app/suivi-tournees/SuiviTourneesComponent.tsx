@@ -283,6 +283,16 @@ export default function SuiviTourneesComponent() {
     return s;
   }, [returns]);
 
+  const hasProofKey = useCallback((set: Set<string>, orderNo: string): boolean => {
+    const no = String(orderNo || '').trim();
+    if (!no) return false;
+    if (set.has(no)) return true;
+    const whs = `WHS-${no}`;
+    if (set.has(whs)) return true;
+    if (no.toUpperCase().startsWith('WHS-') && set.has(no.slice(4))) return true;
+    return false;
+  }, []);
+
   const closeExecutionTour = (city: string) => {
     const tour = assignments[city];
     if (!tour) return;
@@ -299,7 +309,7 @@ export default function SuiviTourneesComponent() {
     }
 
     // Check all orders have POD signature
-    const missingPod = cityOrders.filter(o => !podSet.has(o.No));
+    const missingPod = cityOrders.filter(o => !hasProofKey(podSet, o.No));
     if (missingPod.length > 0) {
       alert(`Impossible de clôturer : signature POD manquante pour ${missingPod.length} commande(s) (${missingPod.map(o => o.No).join(', ')})`);
       return;
@@ -307,7 +317,7 @@ export default function SuiviTourneesComponent() {
 
     // Check returns if required
     if (includeRet) {
-      const missingRet = cityOrders.filter(o => !returnsSet.has(o.No));
+      const missingRet = cityOrders.filter(o => !hasProofKey(returnsSet, o.No));
       if (missingRet.length > 0) {
         alert(`Impossible de clôturer : retours manquants pour ${missingRet.length} commande(s) (${missingRet.map(o => o.No).join(', ')})`);
         return;
@@ -324,8 +334,19 @@ export default function SuiviTourneesComponent() {
     });
   };
 
-  // Show all orders for validated tours, ignore date filter
-  const filteredOrders = useMemo(() => orders, [orders]);
+  // Show only orders from validated tours (those with stopPlans)
+  const filteredOrders = useMemo(() => {
+    // Get all cities that have stopPlans (validated tours)
+    const citiesWithStopPlans = new Set(stopPlans.map(sp => sp.city));
+
+    // Filter orders to only include those from validated tours
+    const filtered = orders.filter(o => {
+      const city = (o.Sell_to_City || "Autres").trim() || "Autres";
+      return citiesWithStopPlans.has(city);
+    });
+
+    return filtered;
+  }, [orders, stopPlans]);
 
   const byCity = useMemo(() => {
     const m: Record<string, Order[]> = {};
@@ -492,14 +513,14 @@ export default function SuiviTourneesComponent() {
             const inProgress = inTour.filter((o) => st[o.No] === "en_cours").length;
             const percent = total === 0 ? 0 : Math.round((delivered / total) * 100);
             const includeReturns = tour?.includeReturns !== false;
-            const missingPOD = inTour.filter((o) => st[o.No] === 'livre' && !podSet.has(o.No)).length;
+            const missingPOD = inTour.filter((o) => st[o.No] === 'livre' && !hasProofKey(podSet, o.No)).length;
             const missingReturns = includeReturns
-              ? inTour.filter((o) => st[o.No] === 'livre' && !returnsSet.has(o.No)).length
+              ? inTour.filter((o) => st[o.No] === 'livre' && !hasProofKey(returnsSet, o.No)).length
               : 0;
             const allOk = inTour.every((o) => {
               if (st[o.No] !== 'livre') return false;
-              if (!podSet.has(o.No)) return false;
-              if (includeReturns && !returnsSet.has(o.No)) return false;
+              if (!hasProofKey(podSet, o.No)) return false;
+              if (includeReturns && !hasProofKey(returnsSet, o.No)) return false;
               return true;
             });
             const execClosed = !!tour?.execClosed;
@@ -602,8 +623,8 @@ export default function SuiviTourneesComponent() {
                     const value = st[o.No] || "non_demarre";
                     const plan = stopPlanByNo.get(o.No);
                     const isLate = !!plan && hhmmToMinutes(plan.eta) > hhmmToMinutes(plan.windowEnd);
-                    const podOk = podSet.has(o.No);
-                    const returnsOk = returnsSet.has(o.No);
+                    const podOk = hasProofKey(podSet, o.No);
+                    const returnsOk = hasProofKey(returnsSet, o.No);
                     const requireReturns = includeReturns;
                     return (
                       <div key={o.No} className="grid grid-cols-1 gap-2 px-3 py-2 text-sm md:grid-cols-[1fr,auto] md:items-center">

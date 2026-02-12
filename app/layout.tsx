@@ -27,11 +27,24 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "./globals.css";
 import { ToastProvider, ToastViewport } from "./components/ToastProvider";
 
+type CityTour = {
+  driver?: string;
+  vehicle?: string;
+  selectedOrders?: string[];
+  closed?: boolean;
+  includeReturns?: boolean;
+  execClosed?: boolean;
+};
+
+type CityStatus = Record<string /*city*/, Record<string /*orderNo*/, string>>;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [globalWarnings, setGlobalWarnings] = useState<string[]>([]);
+  const [globalWarningsVisible, setGlobalWarningsVisible] = useState<boolean>(true);
   const [qrOpen, setQrOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
@@ -45,6 +58,120 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     setUserRole(storedRole);
     
   }, [pathname, router]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const role = (localStorage.getItem('userRole') || '').trim().toLowerCase();
+    if (!role) return;
+    if (pathname === '/') return;
+
+    setGlobalWarnings([]);
+
+    const norm = (s: string) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
+    const driverNo = (localStorage.getItem('driverNo') || '').trim();
+
+    const matchesLoggedDriver = (tourDriver?: string | null): boolean => {
+      const isDriver = role === 'driver' || role === 'chauffeur';
+      if (!isDriver) return true;
+      if (!driverNo) return true;
+      if (!tourDriver) return false;
+      return norm(tourDriver).includes(norm(driverNo));
+    };
+
+    const loadJson = <T,>(key: string, fallback: T): T => {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        return JSON.parse(raw) as T;
+      } catch {
+        return fallback;
+      }
+    };
+
+    const assignments = loadJson<Record<string, CityTour>>('regions_planning_assignments_v1', {});
+    const statuses = loadJson<CityStatus>('regions_planning_status_v1', {} as CityStatus);
+
+    (async () => {
+      try {
+        const [podRes, retRes] = await Promise.all([
+          fetch('/api/pod', { cache: 'no-store' }),
+          fetch('/api/returns', { cache: 'no-store' }),
+        ]);
+        const podJson = await podRes.json();
+        const retJson = await retRes.json();
+        const pods = Array.isArray(podJson?.records) ? podJson.records : [];
+        const returns = Array.isArray(retJson?.records) ? retJson.records : [];
+
+        const podSet = new Set<string>();
+        for (const r of pods) {
+          const k = String(r?.shipmentNo || '').trim();
+          if (k) podSet.add(k);
+        }
+        const returnsSet = new Set<string>();
+        for (const r of returns) {
+          const k = String(r?.shipmentNo || '').trim();
+          if (k) returnsSet.add(k);
+        }
+
+        const hasProofKey = (set: Set<string>, orderNo: string): boolean => {
+          const no = String(orderNo || '').trim();
+          if (!no) return false;
+          if (set.has(no)) return true;
+          const whs = `WHS-${no}`;
+          if (set.has(whs)) return true;
+          if (no.toUpperCase().startsWith('WHS-') && set.has(no.slice(4))) return true;
+          return false;
+        };
+
+        const byDriver: Record<string, { podMissing: Set<string>; returnsMissing: Set<string> }> = {};
+
+        for (const [city, tour] of Object.entries(assignments || {})) {
+          if (!tour?.closed) continue;
+          if (!matchesLoggedDriver(tour?.driver)) continue;
+
+          const plannedNos = new Set<string>((tour?.selectedOrders || []).map((x) => String(x || '').trim()).filter(Boolean));
+          if (plannedNos.size === 0) continue;
+
+          const stCity = statuses?.[city] || {};
+          const includeReturns = tour?.includeReturns !== false;
+          const driverLabel = String(tour?.driver || 'Chauffeur inconnu').trim() || 'Chauffeur inconnu';
+          if (!byDriver[driverLabel]) byDriver[driverLabel] = { podMissing: new Set(), returnsMissing: new Set() };
+
+          for (const no of plannedNos) {
+            const status = String(stCity?.[no] || '').trim().toLowerCase();
+            if (status !== 'livre') continue;
+            if (!hasProofKey(podSet, no)) byDriver[driverLabel].podMissing.add(no);
+            if (includeReturns && !hasProofKey(returnsSet, no)) byDriver[driverLabel].returnsMissing.add(no);
+          }
+        }
+
+        const driverEntries = Object.entries(byDriver).filter(([, v]) => v.podMissing.size > 0 || v.returnsMissing.size > 0);
+        if (driverEntries.length === 0) return;
+
+        const maxToShow = 6;
+        const headerMessages: string[] = [];
+        driverEntries.slice(0, 3).forEach(([driver, v]) => {
+          const podList = Array.from(v.podMissing).slice(0, maxToShow).join(', ');
+          const retList = Array.from(v.returnsMissing).slice(0, maxToShow).join(', ');
+          const parts: string[] = [];
+          if (v.podMissing.size > 0) parts.push(`Signature manquante: ${podList}${v.podMissing.size > maxToShow ? '…' : ''}`);
+          if (v.returnsMissing.size > 0) parts.push(`Retours manquants: ${retList}${v.returnsMissing.size > maxToShow ? '…' : ''}`);
+          const prefix = role === 'admin' ? `${driver} — ` : '';
+          headerMessages.push(`${prefix}${parts.join(' | ')}`);
+        });
+
+        if (role === 'admin' && driverEntries.length > 3) {
+          headerMessages.push(`Autres alertes: ${driverEntries.length - 3} chauffeur(s) avec manques`);
+        }
+
+        setGlobalWarnings(headerMessages);
+        if (headerMessages.length > 0) {
+          setGlobalWarningsVisible(true);
+        }
+      } catch {
+      }
+    })();
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -65,6 +192,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       "/pod-signature",
       "/retours-vides",
       "/suivi",
+      "/historique",
+      "/historique-signatures",
+      "/historique-retours",
       "/whse-shipments-kanban",
     ]);
 
@@ -139,12 +269,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       ]
     : userRole === "driver" || userRole === "chauffeur"
     ? [
-        { href: "/expeditions", label: "Expéditions", icon: faBoxes },
+      //  { href: "/expeditions", label: "Expéditions", icon: faBoxes },
         { href: "/regions-planning", label: "Tournées", icon: faMapMarkedAlt },
         { href: "/suivi-tournees", label: "Suivi des Tournées", icon: faClipboardList },
 
       //  { href: "/whse-shipments-kanban", label: "Kanban Entrepôt", icon: faClipboardList },
-        { href: "/suivi", label: "Suivi en Temps Réel", icon: faClock },
+      //  { href: "/suivi", label: "Suivi en Temps Réel", icon: faClock },
          { href: "/historique", label: "Historique", icon: faHistory },
       ]
     : userRole === "customer"
@@ -280,6 +410,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     </button>
                   </div>
                 </div>
+
+                {globalWarningsVisible && globalWarnings.length > 0 && (
+                  <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="text-sm font-semibold">Avertissements</div>
+                      <button
+                        type="button"
+                        onClick={() => setGlobalWarningsVisible(false)}
+                        className="text-xs px-2 py-1 rounded-lg border border-amber-200 bg-white hover:bg-amber-100"
+                      >
+                        Fermer
+                      </button>
+                    </div>
+                    <div className="mt-1 grid gap-1">
+                      {globalWarnings.slice(0, 6).map((m, idx) => (
+                        <div key={idx} className="text-xs">
+                          {m}
+                        </div>
+                      ))}
+                      {globalWarnings.length > 6 && (
+                        <div className="text-xs">+{globalWarnings.length - 6} autre(s)…</div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {qrOpen && (
                   <div

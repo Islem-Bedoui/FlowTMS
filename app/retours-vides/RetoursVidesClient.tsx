@@ -13,6 +13,7 @@ type ReturnsRecord = {
   hasColis?: boolean;
   hasEmballagesVides?: boolean;
   defects?: Array<{ itemNo: string; qty: number; reason?: string }>;
+  images?: Array<{ id: string; url: string; name: string; uploadedAt: string }>;
 };
 
 type ShipmentItem = { itemNo: string; description?: string };
@@ -43,6 +44,8 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [images, setImages] = useState<Array<{ id: string; url: string; name: string; uploadedAt: string }>>([]);
+  const [uploading, setUploading] = useState(false);
 
   const canSave = useMemo(() => Boolean(shipmentNo) && !saving, [shipmentNo, saving]);
 
@@ -72,6 +75,9 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
                 .filter((d) => d.itemNo && Number.isFinite(d.qty) && d.qty > 0)
                 .map((d) => ({ ...d, reason: d.reason || '' }))
             );
+          }
+          if (Array.isArray(rec?.images)) {
+            setImages(rec.images);
           }
         }
       } catch (e: any) {
@@ -140,6 +146,52 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
     setNewDefect((prev) => ({ ...prev, itemNo: v }));
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setUploading(true);
+    setError(null);
+
+    try {
+      const uploadPromises = files.map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('shipmentNo', shipmentNo);
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed for ${file.name}`);
+        }
+
+        const result = await response.json();
+        return {
+          id: result.id || Date.now().toString() + Math.random(),
+          url: result.url || URL.createObjectURL(file),
+          name: file.name,
+          uploadedAt: new Date().toISOString(),
+        };
+      });
+
+      const uploadedImages = await Promise.all(uploadPromises);
+      setImages((prev) => [...prev, ...uploadedImages]);
+    } catch (error: any) {
+      setError(error.message || 'Erreur lors du téléchargement des images');
+    } finally {
+      setUploading(false);
+      // Clear the input
+      e.target.value = '';
+    }
+  };
+
+  const removeImage = (imageId: string) => {
+    setImages((prev) => prev.filter((img) => img.id !== imageId));
+  };
+
   const save = async () => {
     setSaving(true);
     setError(null);
@@ -147,7 +199,7 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
       const res = await fetch("/api/returns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shipmentNo, values, note, hasColis, hasEmballagesVides, defects }),
+        body: JSON.stringify({ shipmentNo, values, note, hasColis, hasEmballagesVides, defects, images }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Erreur enregistrement");
@@ -360,6 +412,71 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
             </div>
           </div>
 
+          <div className="mt-6">
+            <div className="xp2 mb-3" style={{ color: "var(--logo-4)" }}>Images / Photos</div>
+
+            <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "rgba(79,88,165,0.14)" }}>
+              <div className="mb-3">
+                <label className="xp-text inline-flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors"
+                  style={{ backgroundColor: "var(--shape-4)", color: "white" }}
+                  onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"}
+                  onMouseOut={(e) => e.currentTarget.style.opacity = "1"}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  {uploading ? "Téléchargement..." : "Ajouter des images"}
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={handleImageUpload}
+                  />
+                </label>
+                <span className="xp-text ml-3 text-slate-500 text-sm">Photos des colis, emballages, défauts...</span>
+              </div>
+
+              {images.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {images.map((img) => (
+                    <div key={img.id} className="relative group rounded-lg overflow-hidden border-2" style={{ borderColor: "rgba(79,88,165,0.14)" }}>
+                      <img
+                        src={img.url}
+                        alt={img.name}
+                        className="w-full h-32 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={() => removeImage(img.id)}
+                          className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                          title="Supprimer l'image"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+                        <div className="text-white text-xs truncate">{img.name}</div>
+                        <div className="text-white text-xs opacity-75">{new Date(img.uploadedAt).toLocaleTimeString()}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {images.length === 0 && (
+                <div className="xp-text text-center py-8 text-slate-400 border-2 border-dashed rounded-lg" style={{ borderColor: "rgba(79,88,165,0.14)" }}>
+                  Aucune image ajoutée
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex flex-wrap gap-2 mt-4">
             <button
               disabled={!canSave}
@@ -400,6 +517,7 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
                         setDefects([]);
                         setHasColis(true);
                         setHasEmballagesVides(true);
+                        setImages([]);
                       } catch {}
                     }}
                     className="xp-text px-3 py-1.5 rounded-lg bg-white text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50 text-xs"

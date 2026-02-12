@@ -16,6 +16,7 @@ type ReturnsRecord = {
   hasColis?: boolean;
   hasEmballagesVides?: boolean;
   defects?: Array<{ itemNo: string; qty: number; reason?: string }>;
+  images?: Array<{ id: string; url: string; name: string; uploadedAt: string }>;
 };
 
 const isVercel = !!process.env.VERCEL;
@@ -144,6 +145,7 @@ export async function POST(req: Request) {
       hasColis?: boolean;
       hasEmballagesVides?: boolean;
       defects?: Array<{ itemNo?: string; qty?: number | string | null; reason?: string }>;
+      images?: Array<{ id: string; url: string; name: string; uploadedAt: string }>;
     };
 
     const shipmentNo = (body.shipmentNo || "").trim();
@@ -188,6 +190,7 @@ export async function POST(req: Request) {
       hasColis: typeof body.hasColis === 'boolean' ? body.hasColis : undefined,
       hasEmballagesVides: typeof body.hasEmballagesVides === 'boolean' ? body.hasEmballagesVides : undefined,
       defects,
+      images: Array.isArray(body.images) ? body.images : undefined,
     };
 
     await fs.writeFile(recPath, JSON.stringify(record, null, 2), "utf8");

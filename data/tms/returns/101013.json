@@ -1,0 +1,29 @@
+{
+  "shipmentNo": "101013",
+  "createdAt": "2026-02-12T10:13:13.946Z",
+  "updatedAt": "2026-02-12T10:13:13.946Z",
+  "values": {
+    "palettes": 6,
+    "caisses": 3,
+    "bouteilles": 16,
+    "futs": 1,
+    "autre": 1
+  },
+  "hasColis": true,
+  "hasEmballagesVides": true,
+  "defects": [
+    {
+      "itemNo": "1079",
+      "qty": 2,
+      "reason": "casse"
+    }
+  ],
+  "images": [
+    {
+      "id": "1770891191723_jzjai53ga6",
+      "url": "/uploads/returns/101013_1770891191723_jzjai53ga6.gif",
+      "name": "barcode (70).gif",
+      "uploadedAt": "2026-02-12T10:13:11.738Z"
+    }
+  ]
+}

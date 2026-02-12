@@ -1,0 +1,29 @@
+{
+  "shipmentNo": "101002",
+  "createdAt": "2026-02-12T08:15:14.510Z",
+  "updatedAt": "2026-02-12T08:15:14.510Z",
+  "values": {
+    "palettes": 3,
+    "caisses": 4,
+    "bouteilles": 5,
+    "futs": 2,
+    "autre": 0
+  },
+  "hasColis": false,
+  "hasEmballagesVides": false,
+  "defects": [
+    {
+      "itemNo": "1191",
+      "qty": 3,
+      "reason": "casse"
+    }
+  ],
+  "images": [
+    {
+      "id": "1770884112951_pe0zeyh5apo",
+      "url": "/uploads/returns/101002_1770884112951_pe0zeyh5apo.gif",
+      "name": "barcode (70).gif",
+      "uploadedAt": "2026-02-12T08:15:12.957Z"
+    }
+  ]
+}

@@ -4,6 +4,16 @@
 import { useMemo } from "react";
 
 const cityCoords: Record<string, { lat: number; lng: number }> = {
+  Lausanne: { lat: 46.5197, lng: 6.6323 },
+  Morges: { lat: 46.5505, lng: 6.4923 },
+  Tolochenaz: { lat: 46.4838, lng: 6.4756 },
+  Pully: { lat: 46.5173, lng: 6.6588 },
+  Prilly: { lat: 46.5344, lng: 6.6397 },
+  Renens: { lat: 46.5458, lng: 6.5958 },
+  Crissier: { lat: 46.5386, lng: 6.5697 },
+  Bussigny: { lat: 46.5453, lng: 6.5786 },
+  Ecublens: { lat: 46.5313, lng: 6.5803 },
+  Chavannes: { lat: 46.5292, lng: 6.5686 },
   Paris: { lat: 48.8566, lng: 2.3522 },
   Lyon: { lat: 45.7640, lng: 4.8357 },
   Marseille: { lat: 43.2965, lng: 5.3698 },
@@ -35,7 +45,8 @@ export default function MapTours({
 }) {
   if (!tour?.city || tour.city.trim().toLowerCase() === "tunis") return null;
 
-  const coords = cityCoords[tour.city];
+  const cityKey = tour.city.trim();
+  const coords = cityCoords[cityKey] || cityCoords[cityKey.charAt(0).toUpperCase() + cityKey.slice(1).toLowerCase()];
   if (!coords) {
     return (
       <div className="w-full h-64 bg-slate-100 rounded-xl shadow relative mt-2 flex items-center justify-center">

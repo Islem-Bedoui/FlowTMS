@@ -59,6 +59,9 @@ export default function HistoriquePage() {
   const [tab, setTab] = useState<TabKey>("tournees");
   const [query, setQuery] = useState<string>("");
 
+  const [sessionRole, setSessionRole] = useState<string>("");
+  const [sessionDriverNo, setSessionDriverNo] = useState<string>("");
+
   const [assignments, setAssignments] = useState<Record<string, CityTour>>({});
   const [pods, setPods] = useState<PodRecord[]>([]);
   const [returns, setReturns] = useState<ReturnsRecord[]>([]);
@@ -66,7 +69,24 @@ export default function HistoriquePage() {
 
   useEffect(() => {
     setAssignments(loadAssignments());
+    try {
+      const r = (localStorage.getItem("userRole") || "").trim().toLowerCase();
+      const dno = (localStorage.getItem("driverNo") || "").trim();
+      setSessionRole(r);
+      setSessionDriverNo(dno);
+    } catch {}
   }, []);
+
+  const matchesLoggedDriver = (tourDriver?: string | null) => {
+    const role = (sessionRole || "").trim().toLowerCase();
+    const isDriver = role === "driver" || role === "chauffeur";
+    if (!isDriver) return true;
+    const driverNo = (sessionDriverNo || "").trim();
+    if (!driverNo) return true;
+    if (!tourDriver) return false;
+    const norm = (s: string) => String(s).trim().toLowerCase().replace(/\s+/g, "");
+    return norm(tourDriver).includes(norm(driverNo));
+  };
 
   const mockNoSet = useMemo(() => {
     const set = new Set<string>();
@@ -83,6 +103,19 @@ export default function HistoriquePage() {
     const unprefixed = s.startsWith("WHS-") ? s.slice(4) : s;
     return mockNoSet.has(unprefixed) || mockNoSet.has(s);
   };
+
+  const allowedOrderNosForDriver = useMemo(() => {
+    const set = new Set<string>();
+    for (const t of Object.values(assignments || {})) {
+      if (!t) continue;
+      if (!matchesLoggedDriver(t.driver)) continue;
+      for (const no of t.selectedOrders || []) {
+        const k = String(no || "").trim();
+        if (k) set.add(k);
+      }
+    }
+    return set;
+  }, [assignments, sessionRole, sessionDriverNo]);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,10 +148,11 @@ export default function HistoriquePage() {
   const closedTours = useMemo(() => {
     const list = Object.values(assignments || {})
       .filter((t) => t && t.closed && t.execClosed)
+      .filter((t) => matchesLoggedDriver(t.driver))
       .filter((t) => (t.selectedOrders || []).some((no) => isMockShipmentNo(no)));
     list.sort((a, b) => String(a.city || "").localeCompare(String(b.city || "")));
     return list;
-  }, [assignments, mockNoSet]);
+  }, [assignments, mockNoSet, sessionRole, sessionDriverNo]);
 
   const filteredTours = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -138,11 +172,13 @@ export default function HistoriquePage() {
       const k = String(r?.shipmentNo || "").trim();
       if (!k) continue;
       if (!isMockShipmentNo(k)) continue;
+      const unprefixed = k.startsWith("WHS-") ? k.slice(4) : k;
+      if (allowedOrderNosForDriver.size > 0 && !allowedOrderNosForDriver.has(unprefixed) && !allowedOrderNosForDriver.has(k)) continue;
       const prev = m.get(k);
       if (!prev || String(r?.createdAt || "") > String(prev?.createdAt || "")) m.set(k, r);
     }
     return m;
-  }, [pods]);
+  }, [pods, allowedOrderNosForDriver]);
 
   const filteredPods = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -159,7 +195,14 @@ export default function HistoriquePage() {
 
   const filteredReturns = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const arr = [...(returns || [])].filter((r) => isMockShipmentNo(r?.shipmentNo));
+    const arr = [...(returns || [])]
+      .filter((r) => isMockShipmentNo(r?.shipmentNo))
+      .filter((r) => {
+        const k = String(r?.shipmentNo || "").trim();
+        const unprefixed = k.startsWith("WHS-") ? k.slice(4) : k;
+        if (allowedOrderNosForDriver.size === 0) return true;
+        return allowedOrderNosForDriver.has(unprefixed) || allowedOrderNosForDriver.has(k);
+      });
     arr.sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
     if (!q) return arr;
     return arr.filter((r) => {
@@ -171,7 +214,7 @@ export default function HistoriquePage() {
         .toLowerCase();
       return no.includes(q) || note.includes(q) || kv.includes(q);
     });
-  }, [returns, query, mockNoSet]);
+  }, [returns, query, mockNoSet, allowedOrderNosForDriver]);
 
   const tabButton = (key: TabKey, label: string) => {
     const active = tab === key;

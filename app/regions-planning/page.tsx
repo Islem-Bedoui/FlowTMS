@@ -59,6 +59,20 @@ function hashToUnit(input: string): number {
 
 function cityCenter(cityRaw: string): Point {
   const city = (cityRaw || '').trim().toLowerCase();
+  
+  // Villes suisses (Lausanne région)
+  if (city === 'lausanne') return { lat: 46.5197, lng: 6.6323 };
+  if (city === 'morges') return { lat: 46.5505, lng: 6.4923 };
+  if (city === 'tolochenaz') return { lat: 46.4838, lng: 6.4756 };
+  if (city === 'pully') return { lat: 46.5173, lng: 6.6588 };
+  if (city === 'prilly') return { lat: 46.5344, lng: 6.6397 };
+  if (city === 'renens') return { lat: 46.5458, lng: 6.5958 };
+  if (city === 'crissier') return { lat: 46.5386, lng: 6.5697 };
+  if (city === 'bussigny') return { lat: 46.5453, lng: 6.5786 };
+  if (city === 'ecublens') return { lat: 46.5313, lng: 6.5803 };
+  if (city === 'chavannes') return { lat: 46.5292, lng: 6.5686 };
+  
+  // Villes françaises (conservées pour compatibilité)
   if (city === 'paris') return { lat: 48.8566, lng: 2.3522 };
   if (city === 'lyon') return { lat: 45.7640, lng: 4.8357 };
   if (city === 'marseille') return { lat: 43.2965, lng: 5.3698 };
@@ -68,7 +82,9 @@ function cityCenter(cityRaw: string): Point {
   if (city === 'lille') return { lat: 50.6292, lng: 3.0573 };
   if (city === 'strasbourg') return { lat: 48.5734, lng: 7.7521 };
   if (city === 'nantes') return { lat: 47.2184, lng: -1.5536 };
-  return { lat: 46.2276, lng: 2.2137 }; // France centroid
+  
+  // Par défaut : centre de la Suisse romande
+  return { lat: 46.5197, lng: 6.6323 }; // Lausanne
 }
 
 function mockGeo(o: Order): Point {
@@ -249,22 +265,106 @@ export default function RegionsPlanningPage() {
     try { await navigator.clipboard.writeText(text); } catch {}
   }
 
-  const spreadOrdersAcrossWeek = (date: string) => {
-    // Spread orders by CITY across Mon-Fri: all orders of the same city share the same day
+  const spreadOrdersAcrossWeek = (date: string, mode: 'day' | 'week') => {
+    // Group cities by proximity and create 2 tours per day with max 3 orders each
     const weekStart = startOfWeekISO(date); // Monday
-    const cities = [...new Set(mockOrders.map(o => (o.Sell_to_City || '').trim()))];
-    const cityDay: Record<string, string> = {};
-    cities.forEach((c, i) => { cityDay[c] = addDaysISO(weekStart, i % 5); });
-    return mockOrders.map(o => ({
-      ...o,
-      Requested_Delivery_Date: cityDay[(o.Sell_to_City || '').trim()] || weekStart,
-    })) as Order[];
+    const cities = [...new Set(mockOrders.map(o => (o.Sell_to_City || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const days = mode === 'day'
+      ? [date]
+      : [0, 1, 2, 3, 4, 5, 6].map((d) => addDaysISO(weekStart, d));
+
+    if (cities.length === 0) {
+      return mockOrders.map(o => ({ ...o, Requested_Delivery_Date: weekStart })) as Order[];
+    }
+
+    // Group cities by proximity (simplified: pair consecutive cities)
+    const cityPairs: string[][] = [];
+    for (let i = 0; i < cities.length; i += 2) {
+      cityPairs.push([cities[i], cities[i + 1]].filter(Boolean));
+    }
+
+    // Assign each pair to a specific day (2 tours per day max)
+    const dayAssignments: Record<number, string[]> = {};
+    if (mode === 'day') {
+      // Day mode: 2 tours proches + répétition de Lausanne/Tolochenaz/Morges/etc.
+      // Rotation sur une liste de paires “proches”, filtrée selon les villes présentes.
+      const base = startOfWeekISO(date);
+      const dayIdx = Math.max(0, Math.min(6, Math.floor((Date.parse(date) - Date.parse(base)) / 86400000)));
+
+      const preferredPairs: Array<[string, string]> = [
+        ['Lausanne', 'Morges'],
+        ['Lausanne', 'Tolochenaz'],
+        ['Lausanne', 'Pully'],
+        ['Lausanne', 'Prilly'],
+        ['Lausanne', 'Renens'],
+        ['Morges', 'Tolochenaz'],
+        ['Renens', 'Crissier'],
+        ['Bussigny', 'Crissier'],
+        ['Ecublens', 'Chavannes'],
+      ];
+
+      const citySet = new Set(cities);
+      const availablePairs = preferredPairs
+        .map(([a, b]) => [a, b] as [string, string])
+        .filter(([a, b]) => citySet.has(a) && citySet.has(b));
+
+      let picked: string[] = [];
+      if (availablePairs.length > 0) {
+        const pair = availablePairs[dayIdx % availablePairs.length];
+        picked = [pair[0], pair[1]];
+      } else {
+        // Fallback: take first two cities
+        picked = cities.slice(0, 2);
+      }
+
+      dayAssignments[0] = picked;
+    } else {
+      cityPairs.forEach((pair, pairIdx) => {
+        const dayIdx = pairIdx % days.length;
+        if (!dayAssignments[dayIdx]) dayAssignments[dayIdx] = [];
+        dayAssignments[dayIdx].push(...pair);
+      });
+    }
+
+    // Limit orders per city to max 3 per tour
+    const ordersByCity: Record<string, any[]> = {};
+    mockOrders.forEach(o => {
+      const city = String(o?.Sell_to_City || '').trim();
+      if (!city) return;
+      if (!ordersByCity[city]) ordersByCity[city] = [];
+      ordersByCity[city].push(o);
+    });
+
+    // Take max 3 orders per city
+    Object.keys(ordersByCity).forEach(city => {
+      if (ordersByCity[city].length > 3) {
+        ordersByCity[city] = ordersByCity[city].slice(0, 3);
+      }
+    });
+
+    // Assign dates based on day assignments
+    const result: any[] = [];
+    Object.entries(dayAssignments).forEach(([dayIdx, cities]) => {
+      cities.forEach(city => {
+        const cityOrders = ordersByCity[city] || [];
+        cityOrders.forEach(order => {
+          const idx = parseInt(dayIdx);
+          const d = days[idx] || days[0] || weekStart;
+          result.push({
+            ...order,
+            Requested_Delivery_Date: d,
+          });
+        });
+      });
+    });
+
+    return result as Order[];
   };
 
   const loadOrders = async () => {
     setLoading(true); setError(null);
     try {
-      setOrders(spreadOrdersAcrossWeek(orderDate));
+      setOrders(spreadOrdersAcrossWeek(orderDate, viewMode));
     } catch (e:any) {
       setError(e?.message || "Échec chargement commandes");
     } finally {
@@ -272,7 +372,7 @@ export default function RegionsPlanningPage() {
     }
   };
 
-  useEffect(() => { if (orderDate) loadOrders(); }, [orderDate]);
+  useEffect(() => { if (orderDate) loadOrders(); }, [orderDate, viewMode]);
 
   useEffect(() => {
     // Load chauffeurs (BC)
@@ -390,11 +490,41 @@ export default function RegionsPlanningPage() {
     });
 
     if (viewMode === 'day') {
-      entries = entries.slice(0, 3);
+      entries = entries.slice(0, 2);
     }
 
     return entries;
   }, [filteredOrders, viewMode, assignments, sessionRole, sessionDriverNo]);
+
+  const availableDriversByCity = useMemo(() => {
+    const result: Record<string, typeof chauffeurs> = {};
+    
+    // Get all assigned drivers with their count
+    const assignedDriverCounts = new Map<string, number>();
+    Object.entries(assignments).forEach(([city, tour]) => {
+      if (tour.driver && tour.driver.trim()) {
+        const driverLabel = tour.driver.trim();
+        const currentCount = assignedDriverCounts.get(driverLabel) || 0;
+        assignedDriverCounts.set(driverLabel, currentCount + 1);
+      }
+    });
+
+    // For each city, calculate available drivers
+    byCity.forEach(([city]) => {
+      const currentDriver = assignments[city]?.driver?.trim();
+      
+      result[city] = chauffeurs.filter(ch => {
+        const label = `${ch.Name} (${ch.No})`;
+        const currentCount = assignedDriverCounts.get(label) || 0;
+        const isCurrentDriver = label === currentDriver;
+
+        // Allow if driver has less than 2 assignments OR is the current driver for this city
+        return currentCount < 2 || isCurrentDriver;
+      });
+    });
+
+    return result;
+  }, [assignments, chauffeurs, byCity]);
 
 
   // Auto-select all orders per city — tours are ready directly
@@ -457,6 +587,28 @@ export default function RegionsPlanningPage() {
     if (selectedOrders.length !== list.length) {
       toast.error('Veuillez sélectionner toutes les expéditions (commandes) de la tournée avant de valider.');
       return;
+    }
+
+    // Ensure a tour does not contain multiple orders for the same client
+    try {
+      const dup: Record<string, string[]> = {};
+      for (const o of selectedOrders) {
+        const clientName = String((o as any)?.Sell_to_Customer_Name || '').trim();
+        if (!clientName) continue;
+        if (!dup[clientName]) dup[clientName] = [];
+        dup[clientName].push(String(o.No || '').trim());
+      }
+      const duplicates = Object.entries(dup).filter(([, nos]) => nos.length > 1);
+      if (duplicates.length > 0) {
+        const msg = duplicates
+          .map(([c, nos]) => `${c}: ${nos.join(', ')}`)
+          .slice(0, 5)
+          .join(' | ');
+        toast.error(`Client en double dans la tournée. Une tournée ne peut pas contenir 2 commandes du même client. (${msg})`);
+        return;
+      }
+    } catch {
+      // if something goes wrong, do not block validation
     }
 
     // Auto-planning (mock): compute ETA sequentially based on selected order.
@@ -591,7 +743,28 @@ export default function RegionsPlanningPage() {
   };
 
   const setDriver = (city: string, driver: string) => {
-    setAssignments(prev => { const next = { ...prev, [city]: { ...getTour(city), driver } }; saveAssignments(next); return next; });
+    // Check if driver is already assigned to more than 1 other city (max 2 tours per driver)
+    if (driver && driver.trim()) {
+      const alreadyAssignedCount = Object.entries(assignments).filter(([c, t]) => 
+        c !== city && t.driver && t.driver.trim() === driver.trim()
+      ).length;
+      
+      if (alreadyAssignedCount >= 2) {
+        alert(`Ce chauffeur est déjà assigné à ${alreadyAssignedCount} autres tournées aujourd'hui (maximum autorisé : 2)`);
+        return;
+      }
+      
+      // Optional: Check if cities are too far apart (you can customize this logic)
+      const alreadyAssigned = Object.entries(assignments).filter(([c, t]) => 
+        c !== city && t.driver && t.driver.trim() === driver.trim()
+      );
+    }
+    
+    setAssignments(prev => { 
+      const next = { ...prev, [city]: { ...getTour(city), driver } }; 
+      saveAssignments(next); 
+      return next; 
+    });
   };
   const setVehicle = (city: string, vehicle: string) => {
     setAssignments(prev => { const next = { ...prev, [city]: { ...getTour(city), vehicle } }; saveAssignments(next); return next; });
@@ -773,19 +946,11 @@ export default function RegionsPlanningPage() {
                   onChange={(e)=> setDriver(city, e.target.value)}
                 >
                   <option value="">Sélectionner chauffeur…</option>
-                  {(() => {
-                    // Find chauffeurs already assigned to other cities
-                    const assignedDrivers = Object.entries(assignments)
-                      .filter(([c, t]) => c !== city && t.driver)
-                      .map(([_, t]) => t.driver);
-                    return chauffeurs.filter(ch =>
-                      !assignedDrivers.includes(ch.Name + ' (' + ch.No + ')') || tour.driver === (ch.Name + ' (' + ch.No + ')')
-                    ).map(ch => (
-                      <option key={ch.No} value={ch.Name + ' (' + ch.No + ')'}>
-                        {ch.Name} ({ch.No})
-                      </option>
-                    ));
-                  })()}
+                  {(availableDriversByCity[city] || chauffeurs).map(ch => (
+                    <option key={ch.No} value={ch.Name + ' (' + ch.No + ')'}>
+                      {ch.Name} ({ch.No})
+                    </option>
+                  ))}
                 </select>
                 <select
                   className="px-2 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
