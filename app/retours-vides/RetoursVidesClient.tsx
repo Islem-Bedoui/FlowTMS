@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { mockOrders } from "@/types/mockOrders";
 
 type ReturnsRecord = {
   shipmentNo: string;
@@ -117,18 +118,53 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
         if (!cancelled) setItemsLoading(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, [shipmentNo]);
 
+  // Fallback items si l'API ne retourne rien (évite liste vide sur Vercel)
+  // Génère une liste d'items plausible pour chaque commande mock
+  const displayItems = useMemo(() => {
+    if (items.length > 0) return items;
+    // Trouve la commande correspondante (avec ou sans WHS-)
+    const order = mockOrders.find(o => o.No === shipmentNo || `WHS-${o.No}` === shipmentNo);
+    const seed = Number(String(shipmentNo || '').replace(/\D/g, '').slice(-2)) || 1;
+    const baseItems = [
+      { itemNo: 'PAL001', description: 'Palette standard' },
+      { itemNo: 'CAI002', description: 'Caisse carton' },
+      { itemNo: 'BTE003', description: 'Bouteille plastique' },
+      { itemNo: 'FUT004', description: 'Fut métallique' },
+      { itemNo: 'SAC005', description: 'Sac de 25kg' },
+      { itemNo: 'ROL006', description: 'Rouleau film' },
+    ];
+    // Génère 3 à 5 items uniques basés sur la commande
+    const count = 3 + (seed % 3);
+    const selected: typeof baseItems = [];
+    const used = new Set<string>();
+    while (selected.length < count && selected.length < baseItems.length) {
+      const idx = (seed + selected.length) % baseItems.length;
+      const it = baseItems[idx];
+      if (!used.has(it.itemNo)) {
+        used.add(it.itemNo);
+        selected.push({ ...it, itemNo: `${it.itemNo}-${shipmentNo?.slice(-4) || '0000'}` });
+      }
+    }
+    return selected;
+  }, [items, shipmentNo]);
+
   const canAddDefect = useMemo(() => {
-    return !!newDefect.itemNo && Number.isFinite(newDefect.qty) && newDefect.qty > 0;
-  }, [newDefect.itemNo, newDefect.qty]);
+    return !!newDefect.itemNo && Number.isFinite(newDefect.qty) && newDefect.qty > 0 && displayItems.some(it => it.itemNo === newDefect.itemNo);
+  }, [newDefect.itemNo, newDefect.qty, displayItems]);
 
   const addDefect = () => {
-    if (!canAddDefect) return;
+    if (!canAddDefect) {
+      if (newDefect.itemNo && !displayItems.some(it => it.itemNo === newDefect.itemNo)) {
+        setError('Cet article n\'existe pas dans la liste.');
+      }
+      return;
+    }
+    setError(null);
     setDefects((prev) => [...prev, { itemNo: newDefect.itemNo.trim(), qty: Number(newDefect.qty), reason: (newDefect.reason || '').trim() }]);
     setNewDefect({ itemNo: "", qty: 1, reason: "" });
   };
@@ -143,6 +179,8 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
     const code = window.prompt('Scanner / saisir code article');
     const v = String(code || '').trim();
     if (!v) return;
+    // Remplit le champ, mais l'ajout ne sera autorisé que si l'item existe dans la liste
+    setError(null); // efface l'erreur précédente si l'utilisateur scanne à nouveau
     setNewDefect((prev) => ({ ...prev, itemNo: v }));
   };
 
@@ -324,7 +362,7 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
                       disabled={itemsLoading}
                     >
                       <option value="">{itemsLoading ? 'Chargement...' : 'Sélectionner...'}</option>
-                      {items.map((it) => (
+                      {displayItems.map((it) => (
                         <option key={it.itemNo} value={it.itemNo}>
                           {it.itemNo}{it.description ? ` — ${it.description}` : ''}
                         </option>

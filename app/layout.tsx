@@ -94,8 +94,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     (async () => {
       try {
         const [podRes, retRes] = await Promise.all([
-          fetch('/api/pod', { cache: 'no-store' }),
-          fetch('/api/returns', { cache: 'no-store' }),
+          fetch(`/api/pod?_t=${Date.now()}`, { cache: 'no-store' }),
+          fetch(`/api/returns?_t=${Date.now()}`, { cache: 'no-store' }),
         ]);
         const podJson = await podRes.json();
         const retJson = await retRes.json();

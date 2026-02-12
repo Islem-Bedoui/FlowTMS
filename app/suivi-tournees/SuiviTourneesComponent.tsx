@@ -188,8 +188,8 @@ export default function SuiviTourneesComponent() {
     setProofLoading(true);
     try {
       const [podRes, retRes] = await Promise.all([
-        fetch('/api/pod', { cache: 'no-store' }),
-        fetch('/api/returns', { cache: 'no-store' }),
+        fetch(`/api/pod?_t=${Date.now()}`, { cache: 'no-store' }),
+        fetch(`/api/returns?_t=${Date.now()}`, { cache: 'no-store' }),
       ]);
       const podJson = await podRes.json();
       const retJson = await retRes.json();
@@ -245,7 +245,10 @@ export default function SuiviTourneesComponent() {
   };
 
   const reloadAll = async () => {
-    await Promise.all([loadOrders(), loadProofs()]);
+    await loadOrders();
+    // Petite pause pour laisser Vercel écrire/lire les fichiers dans /tmp
+    await new Promise(r => setTimeout(r, 300));
+    await loadProofs();
   };
 
   useEffect(() => {
