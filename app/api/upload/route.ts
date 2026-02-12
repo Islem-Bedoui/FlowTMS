@@ -3,6 +3,9 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -25,7 +28,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'returns');
+    // Sur Vercel, on utilise /tmp pour les écritures, puis on copie dans public si possible
+    const isVercel = !!process.env.VERCEL;
+    const uploadsDir = isVercel ? join('/tmp', 'uploads', 'returns') : join(process.cwd(), 'public', 'uploads', 'returns');
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true });
     }
@@ -43,9 +48,11 @@ export async function POST(request: NextRequest) {
     await writeFile(filepath, buffer);
 
     // Return file info
+    // Sur Vercel, l'URL doit pointer vers l'API qui sert les fichiers depuis /tmp
+    const url = isVercel ? `/api/uploads/${filename}` : `/uploads/returns/${filename}`;
     return NextResponse.json({
       id: `${timestamp}_${randomId}`,
-      url: `/uploads/returns/${filename}`,
+      url,
       name: file.name,
       size: file.size,
       type: file.type
