@@ -91,6 +91,80 @@ export async function GET(req: Request) {
         }
       }
 
+      // Ajouter des données mock si aucun enregistrement n'existe
+      if (records.length === 0) {
+        const mockReturns: ReturnsRecord[] = [
+          {
+            shipmentNo: "WHS-1001",
+            createdAt: "2024-01-15T10:30:00Z",
+            updatedAt: "2024-01-15T10:30:00Z",
+            values: {
+              palettes: 3,
+              caisses: 5,
+              bouteilles: 12,
+              futs: 1,
+              autre: 0
+            },
+            note: "Retour en bon état",
+            hasColis: true,
+            hasEmballagesVides: true,
+            defects: []
+          },
+          {
+            shipmentNo: "WHS-1002",
+            createdAt: "2024-01-15T14:20:00Z",
+            updatedAt: "2024-01-15T14:20:00Z",
+            values: {
+              palettes: 2,
+              caisses: 8,
+              bouteilles: 15,
+              futs: 0,
+              autre: 1
+            },
+            note: "Quelques emballages endommagés",
+            hasColis: true,
+            hasEmballagesVides: true,
+            defects: [
+              { itemNo: "BOX-001", qty: 2, reason: "Écrasé" }
+            ]
+          },
+          {
+            shipmentNo: "WHS-2001",
+            createdAt: "2024-01-17T13:30:00Z",
+            updatedAt: "2024-01-17T13:30:00Z",
+            values: {
+              palettes: 4,
+              caisses: 6,
+              bouteilles: 20,
+              futs: 2,
+              autre: 0
+            },
+            note: "Signature TNT Express",
+            hasColis: true,
+            hasEmballagesVides: true,
+            defects: []
+          },
+          {
+            shipmentNo: "WHS-2002",
+            createdAt: "2024-01-18T08:45:00Z",
+            updatedAt: "2024-01-18T08:45:00Z",
+            values: {
+              palettes: 1,
+              caisses: 3,
+              bouteilles: 8,
+              futs: 0,
+              autre: 0
+            },
+            note: "Livraison Toulechenaz - Retour partiel",
+            hasColis: true,
+            hasEmballagesVides: false,
+            defects: []
+          }
+        ];
+        
+        records.push(...mockReturns);
+      }
+
       records.sort((a, b) => {
         const da = a.updatedAt || a.createdAt || "";
         const db = b.updatedAt || b.createdAt || "";
