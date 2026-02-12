@@ -346,15 +346,15 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
-      <div className="container mx-auto p-3 md:p-6 max-w-7xl space-y-6">
+      <div className="container mx-auto p-2 sm:p-3 md:p-6 max-w-7xl space-y-4 sm:space-y-6">
 
         {/* ── Hero Header ── */}
-        <div className="relative overflow-hidden rounded-2xl p-6 md:p-8" style={{ background: "linear-gradient(135deg, #4f58a5 0%, #406fb5 40%, #49a2da 100%)" }}>
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8" style={{ background: "linear-gradient(135deg, #4f58a5 0%, #406fb5 40%, #49a2da 100%)" }}>
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Tableau de bord</h1>
-              <p className="mt-1 text-sm text-white/80">Traçabilité en temps réel &bull; Oublis &bull; Statistiques véhicules &bull; RSE</p>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">Tableau de bord</h1>
+              <p className="mt-1 text-xs sm:text-sm text-white/80">Traçabilité en temps réel &bull; Oublis &bull; Statistiques véhicules &bull; RSE</p>
             </div>
             <button
               type="button"
@@ -362,100 +362,100 @@ export default function DashboardPage() {
                 setAssignments(pickAssignments());
                 setStatuses(pickStatuses());
               }}
-              className="shrink-0 px-4 py-2 rounded-xl bg-white/20 backdrop-blur text-white text-sm font-medium ring-1 ring-white/30 hover:bg-white/30 transition"
+              className="shrink-0 px-3 py-2 sm:px-4 rounded-xl bg-white/20 backdrop-blur text-white text-xs sm:text-sm font-medium ring-1 ring-white/30 hover:bg-white/30 transition"
               title="Recharger depuis le stockage local"
             >
               Rafraîchir
             </button>
           </div>
-          {loading && <div className="relative mt-3 text-sm text-white/70">Chargement POD / Retours…</div>}
+          {loading && <div className="relative mt-2 sm:mt-3 text-xs text-white/70">Chargement POD / Retours…</div>}
         </div>
 
         {/* ── Top KPI Row ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Tours card */}
-          <div className="rounded-2xl p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
-            <div className="text-4xl font-extrabold" style={{ color: "var(--logo-1)" }}>{global.tours}</div>
-            <div className="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Tournées</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">{global.planned} stops &bull; {global.closedTours} validée(s)</div>
-            <div className="text-[11px] text-slate-400">{mockOrders.length} commandes totales</div>
+          <div className="rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
+            <div className="text-2xl sm:text-4xl font-extrabold" style={{ color: "var(--logo-1)" }}>{global.tours}</div>
+            <div className="text-[10px] sm:text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Tournées</div>
+            <div className="text-[9px] sm:text-[11px] text-slate-400 mt-0.5">{global.planned} stops &bull; {global.closedTours} validée(s)</div>
+            <div className="text-[9px] sm:text-[11px] text-slate-400 hidden sm:block">{mockOrders.length} commandes totales</div>
           </div>
 
           {/* Delivery ring */}
-          <div className="rounded-2xl p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center">
-            <div className="relative h-20 w-20">
-              <div className="h-20 w-20 rounded-full" style={{ background: `conic-gradient(#10b981 ${rings.delivery}%, #e5e7eb 0)` }}>
-                <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
-                  <span className="text-lg font-extrabold text-emerald-600">{fmtPct(global.deliveryRate)}</span>
+          <div className="rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center">
+            <div className="relative h-16 w-16 sm:h-20 sm:w-20">
+              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full" style={{ background: `conic-gradient(#10b981 ${rings.delivery}%, #e5e7eb 0)` }}>
+                <div className="absolute inset-1.5 sm:inset-2 rounded-full bg-white flex items-center justify-center">
+                  <span className="text-sm sm:text-lg font-extrabold text-emerald-600">{fmtPct(global.deliveryRate)}</span>
                 </div>
               </div>
             </div>
-            <div className="mt-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Livraisons</div>
-            <div className="text-[11px] text-slate-400">{global.delivered} / {global.planned}</div>
+            <div className="mt-1 sm:mt-2 text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Livraisons</div>
+            <div className="text-[9px] sm:text-[11px] text-slate-400">{global.delivered} / {global.planned}</div>
           </div>
 
           {/* POD ring */}
-          <div className="rounded-2xl p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center">
-            <div className="relative h-20 w-20">
-              <div className="h-20 w-20 rounded-full" style={{ background: `conic-gradient(#3b82f6 ${rings.pod}%, #e5e7eb 0)` }}>
-                <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
-                  <span className="text-lg font-extrabold text-blue-600">{fmtPct(global.podRate)}</span>
+          <div className="rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center">
+            <div className="relative h-16 w-16 sm:h-20 sm:w-20">
+              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full" style={{ background: `conic-gradient(#3b82f6 ${rings.pod}%, #e5e7eb 0)` }}>
+                <div className="absolute inset-1.5 sm:inset-2 rounded-full bg-white flex items-center justify-center">
+                  <span className="text-sm sm:text-lg font-extrabold text-blue-600">{fmtPct(global.podRate)}</span>
                 </div>
               </div>
             </div>
-            <div className="mt-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Signatures POD</div>
-            <div className="text-[11px] text-slate-400">{global.signed} / {global.delivered}{global.missedPod > 0 && <span className="text-rose-500 ml-1">({global.missedPod} oublis)</span>}</div>
+            <div className="mt-1 sm:mt-2 text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Signatures POD</div>
+            <div className="text-[9px] sm:text-[11px] text-slate-400">{global.signed} / {global.delivered}{global.missedPod > 0 && <span className="text-rose-500 ml-1">({global.missedPod} oublis)</span>}</div>
           </div>
 
           {/* Returns ring */}
-          <div className="rounded-2xl p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center">
-            <div className="relative h-20 w-20">
-              <div className="h-20 w-20 rounded-full" style={{ background: `conic-gradient(#f59e0b ${rings.ret}%, #e5e7eb 0)` }}>
-                <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
-                  <span className="text-lg font-extrabold text-amber-600">{fmtPct(global.returnsRate)}</span>
+          <div className="rounded-xl sm:rounded-2xl p-3 sm:p-5 bg-white shadow-sm border border-slate-100 flex flex-col items-center">
+            <div className="relative h-16 w-16 sm:h-20 sm:w-20">
+              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full" style={{ background: `conic-gradient(#f59e0b ${rings.ret}%, #e5e7eb 0)` }}>
+                <div className="absolute inset-1.5 sm:inset-2 rounded-full bg-white flex items-center justify-center">
+                  <span className="text-sm sm:text-lg font-extrabold text-amber-600">{fmtPct(global.returnsRate)}</span>
                 </div>
               </div>
             </div>
-            <div className="mt-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Retours saisis</div>
-            <div className="text-[11px] text-slate-400">{global.returnsDone} / {global.delivered}{global.missedReturns > 0 && <span className="text-rose-500 ml-1">({global.missedReturns} oublis)</span>}</div>
+            <div className="mt-1 sm:mt-2 text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Retours saisis</div>
+            <div className="text-[9px] sm:text-[11px] text-slate-400">{global.returnsDone} / {global.delivered}{global.missedReturns > 0 && <span className="text-rose-500 ml-1">({global.missedReturns} oublis)</span>}</div>
           </div>
         </div>
 
         {/* ── Status Distribution ── */}
-        <div className="rounded-2xl bg-white shadow-sm border border-slate-100 p-5 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div className="rounded-xl sm:rounded-2xl bg-white shadow-sm border border-slate-100 p-4 sm:p-5 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5">
             <div>
-              <h2 className="text-base font-bold text-slate-900">Répartition des statuts</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Suivi en temps réel de toutes les commandes</p>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">Répartition des statuts</h2>
+              <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">Suivi en temps réel de toutes les commandes</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-5">
-            <div className="rounded-xl p-4 text-center" style={{ background: "linear-gradient(135deg, rgba(148,163,184,0.12), rgba(148,163,184,0.04))" }}>
-              <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-200/60 mb-2">
-                <span className="text-lg">⏳</span>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5">
+            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 text-center" style={{ background: "linear-gradient(135deg, rgba(148,163,184,0.12), rgba(148,163,184,0.04))" }}>
+              <div className="inline-flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-slate-200/60 mb-2">
+                <span className="text-sm sm:text-lg">⏳</span>
               </div>
-              <div className="text-2xl font-extrabold text-slate-700">{global.notStarted}</div>
-              <div className="text-[11px] font-medium text-slate-500 mt-0.5">Non démarré</div>
+              <div className="text-xl sm:text-2xl font-extrabold text-slate-700">{global.notStarted}</div>
+              <div className="text-[9px] sm:text-[11px] font-medium text-slate-500 mt-0.5">Non démarré</div>
             </div>
-            <div className="rounded-xl p-4 text-center" style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(139,92,246,0.04))" }}>
-              <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-violet-200/60 mb-2">
-                <span className="text-lg">🚚</span>
+            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 text-center" style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(139,92,246,0.04))" }}>
+              <div className="inline-flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-violet-200/60 mb-2">
+                <span className="text-sm sm:text-lg">🚚</span>
               </div>
-              <div className="text-2xl font-extrabold text-violet-700">{global.inProgress}</div>
-              <div className="text-[11px] font-medium text-slate-500 mt-0.5">En cours</div>
+              <div className="text-xl sm:text-2xl font-extrabold text-violet-700">{global.inProgress}</div>
+              <div className="text-[9px] sm:text-[11px] font-medium text-slate-500 mt-0.5">En cours</div>
             </div>
-            <div className="rounded-xl p-4 text-center" style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04))" }}>
-              <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-200/60 mb-2">
-                <span className="text-lg">✅</span>
+            <div className="rounded-lg sm:rounded-xl p-3 sm:p-4 text-center" style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04))" }}>
+              <div className="inline-flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-emerald-200/60 mb-2">
+                <span className="text-sm sm:text-lg">✅</span>
               </div>
-              <div className="text-2xl font-extrabold text-emerald-700">{global.delivered}</div>
-              <div className="text-[11px] font-medium text-slate-500 mt-0.5">Livré</div>
+              <div className="text-xl sm:text-2xl font-extrabold text-emerald-700">{global.delivered}</div>
+              <div className="text-[9px] sm:text-[11px] font-medium text-slate-500 mt-0.5">Livré</div>
             </div>
           </div>
 
           {/* Stacked bar */}
-          <div className="h-4 rounded-full bg-slate-100 overflow-hidden flex">
+          <div className="h-3 sm:h-4 rounded-full bg-slate-100 overflow-hidden flex">
             {(() => {
               const total = Math.max(1, global.planned);
               const pNon = (global.notStarted / total) * 100;
@@ -470,24 +470,24 @@ export default function DashboardPage() {
               );
             })()}
           </div>
-          <div className="flex flex-wrap items-center gap-4 mt-3 text-[11px] text-slate-500">
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Livré</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-violet-500" /> En cours</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Non démarré</span>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 sm:mt-3 text-[9px] sm:text-[11px] text-slate-500">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-emerald-500" /> Livré</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-violet-500" /> En cours</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-slate-400" /> Non démarré</span>
           </div>
         </div>
 
         {/* ── Vehicles & RSE ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Km chart */}
-          <div className="rounded-2xl bg-white shadow-sm border border-slate-100 p-5 md:p-6">
-            <h2 className="text-base font-bold text-slate-900 mb-1">Distance par véhicule</h2>
-            <p className="text-xs text-slate-500 mb-4">Km estimés (aller-retour dépôt)</p>
+          <div className="rounded-xl sm:rounded-2xl bg-white shadow-sm border border-slate-100 p-4 sm:p-5 md:p-6">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Distance par véhicule</h2>
+            <p className="text-[10px] sm:text-xs text-slate-500 mb-3 sm:mb-4">Km estimés (aller-retour dépôt)</p>
             {byVehicle.length === 0 ? (
-              <div className="text-sm text-slate-400 py-8 text-center">Aucune tournée validée</div>
+              <div className="text-xs sm:text-sm text-slate-400 py-6 sm:py-8 text-center">Aucune tournée validée</div>
             ) : (
-              <div className="space-y-3">
-                {byVehicle.slice(0, 8).map((r, i) => {
+              <div className="space-y-2 sm:space-y-3">
+                {byVehicle.slice(0, 6).map((r, i) => {
                   const w = maxKm <= 0 ? 0 : (r.kmEst / maxKm) * 100;
                   const colors = [
                     "linear-gradient(90deg, #4f58a5, #49a2da)",
@@ -499,12 +499,12 @@ export default function DashboardPage() {
                     <div key={`km-${r.vehicle}||${r.driver}`}>
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center justify-center h-6 w-6 rounded-md text-[10px] font-bold text-white" style={{ background: colors[i % colors.length] }}>{i + 1}</span>
-                          <span className="text-xs font-semibold text-slate-800 truncate max-w-[160px]">{r.vehicle}</span>
+                          <span className="inline-flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 rounded-md text-[9px] sm:text-[10px] font-bold text-white" style={{ background: colors[i % colors.length] }}>{i + 1}</span>
+                          <span className="text-xs font-semibold text-slate-800 truncate max-w-[120px] sm:max-w-[160px]">{r.vehicle}</span>
                         </div>
                         <span className="text-xs font-medium text-slate-600">{r.kmEst.toFixed(0)} km</span>
                       </div>
-                      <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-2 sm:h-2.5 rounded-full bg-slate-100 overflow-hidden">
                         <div className="h-full rounded-full transition-all duration-700" style={{ width: `${w}%`, backgroundImage: colors[i % colors.length] }} />
                       </div>
                     </div>
@@ -515,21 +515,21 @@ export default function DashboardPage() {
           </div>
 
           {/* Vehicle table */}
-          <div className="rounded-2xl bg-white shadow-sm border border-slate-100 p-5 md:p-6">
-            <h2 className="text-base font-bold text-slate-900 mb-1">Performance & RSE</h2>
-            <p className="text-xs text-slate-500 mb-4">Taux par véhicule et impact carbone</p>
+          <div className="rounded-xl sm:rounded-2xl bg-white shadow-sm border border-slate-100 p-4 sm:p-5 md:p-6">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Performance & RSE</h2>
+            <p className="text-[10px] sm:text-xs text-slate-500 mb-3 sm:mb-4">Taux par véhicule et impact carbone</p>
             {byVehicle.length === 0 ? (
-              <div className="text-sm text-slate-400 py-8 text-center">Aucune tournée validée</div>
+              <div className="text-xs sm:text-sm text-slate-400 py-6 sm:py-8 text-center">Aucune tournée validée</div>
             ) : (
-              <div className="overflow-auto rounded-xl border border-slate-100">
-                <table className="min-w-full text-sm">
+              <div className="overflow-auto rounded-lg sm:rounded-xl border border-slate-100">
+                <table className="min-w-full text-xs sm:text-sm">
                   <thead>
-                    <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500" style={{ background: "linear-gradient(135deg, #f8fafc, #f1f5f9)" }}>
-                      <th className="px-3 py-2.5 font-semibold">Véhicule</th>
-                      <th className="px-3 py-2.5 font-semibold">Livraison</th>
-                      <th className="px-3 py-2.5 font-semibold">POD</th>
-                      <th className="px-3 py-2.5 font-semibold">Retours</th>
-                      <th className="px-3 py-2.5 font-semibold">CO₂</th>
+                    <tr className="text-left text-[9px] sm:text-[11px] uppercase tracking-wider text-slate-500" style={{ background: "linear-gradient(135deg, #f8fafc, #f1f5f9)" }}>
+                      <th className="px-2 sm:px-3 py-2 sm:py-2.5 font-semibold">Véhicule</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-2.5 font-semibold hidden sm:table-cell">Livraison</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-2.5 font-semibold hidden sm:table-cell">POD</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-2.5 font-semibold hidden sm:table-cell">Retours</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-2.5 font-semibold">CO₂</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -540,14 +540,14 @@ export default function DashboardPage() {
                       const pillColor = (v: number) => v >= 80 ? "bg-emerald-100 text-emerald-700" : v >= 50 ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700";
                       return (
                         <tr key={`${r.vehicle}||${r.driver}`} className={`border-t border-slate-100 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
-                          <td className="px-3 py-2.5">
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5">
                             <div className="font-semibold text-xs" style={{ color: "var(--logo-4)" }}>{r.vehicle}</div>
-                            <div className="text-[10px] text-slate-400">{r.driver}</div>
+                            <div className="text-[9px] text-slate-400 truncate max-w-[80px] sm:max-w-none">{r.driver}</div>
                           </td>
-                          <td className="px-3 py-2.5"><span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${pillColor(deliveryRate)}`}>{fmtPct(deliveryRate)}</span></td>
-                          <td className="px-3 py-2.5"><span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${pillColor(podRate)}`}>{fmtPct(podRate)}</span></td>
-                          <td className="px-3 py-2.5"><span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${pillColor(returnsRate)}`}>{fmtPct(returnsRate)}</span></td>
-                          <td className="px-3 py-2.5 text-xs text-slate-600 font-medium">{r.co2EstKg.toFixed(0)} kg</td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell"><span className={`inline-block px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[11px] font-medium ${pillColor(deliveryRate)}`}>{fmtPct(deliveryRate)}</span></td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell"><span className={`inline-block px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[11px] font-medium ${pillColor(podRate)}`}>{fmtPct(podRate)}</span></td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 hidden sm:table-cell"><span className={`inline-block px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[11px] font-medium ${pillColor(returnsRate)}`}>{fmtPct(returnsRate)}</span></td>
+                          <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs text-slate-600 font-medium">{r.co2EstKg.toFixed(0)} kg</td>
                         </tr>
                       );
                     })}
@@ -555,32 +555,32 @@ export default function DashboardPage() {
                 </table>
               </div>
             )}
-            <div className="text-[11px] text-slate-400 mt-3">
+            <div className="text-[9px] sm:text-[11px] text-slate-400 mt-2 sm:mt-3">
               km/CO₂ sont des estimations basées sur la distance ville (haversine).
             </div>
           </div>
         </div>
 
         {/* ── Orders by City ── */}
-        <div className="rounded-2xl bg-white shadow-sm border border-slate-100 p-5 md:p-6">
-          <h2 className="text-base font-bold text-slate-900 mb-1">Commandes par ville</h2>
-          <p className="text-xs text-slate-500 mb-4">{mockOrders.length} commandes au total</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="rounded-xl sm:rounded-2xl bg-white shadow-sm border border-slate-100 p-4 sm:p-5 md:p-6">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 mb-1">Commandes par ville</h2>
+          <p className="text-[10px] sm:text-xs text-slate-500 mb-3 sm:mb-4">{mockOrders.length} commandes au total</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
             {ordersByCity.map(([city, count]) => {
               const tour = assignments[city];
               const isValidated = !!tour?.closed;
               const hasAssignment = !!(tour && (tour.selectedOrders || []).length > 0);
               return (
-                <div key={city} className="rounded-xl p-4 border border-slate-100 relative overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(79,88,165,0.06), rgba(73,162,218,0.06))" }}>
-                  <div className="text-lg font-extrabold" style={{ color: "var(--logo-1)" }}>{count}</div>
-                  <div className="text-xs font-semibold text-slate-700 mt-0.5">{city}</div>
-                  <div className="mt-2">
+                <div key={city} className="rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-100 relative overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(79,88,165,0.06), rgba(73,162,218,0.06))" }}>
+                  <div className="text-lg sm:text-lg font-extrabold" style={{ color: "var(--logo-1)" }}>{count}</div>
+                  <div className="text-xs font-semibold text-slate-700 mt-0.5 truncate">{city}</div>
+                  <div className="mt-1 sm:mt-2">
                     {isValidated ? (
-                      <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Validée</span>
+                      <span className="inline-block text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Validée</span>
                     ) : hasAssignment ? (
-                      <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-medium">En préparation</span>
+                      <span className="inline-block text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-medium">En préparation</span>
                     ) : (
-                      <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">Non planifiée</span>
+                      <span className="inline-block text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">Non planifiée</span>
                     )}
                   </div>
                 </div>

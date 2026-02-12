@@ -358,6 +358,12 @@ export default function SuiviTourneesComponent() {
       if (!t) return prev;
       next[city] = { ...t, execClosed: true };
       saveAssignments(next);
+      
+      // Rediriger vers l'historique après la clôture réussie
+      setTimeout(() => {
+        router.push('/historique');
+      }, 1000);
+      
       return next;
     });
   };
