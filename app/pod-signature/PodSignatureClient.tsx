@@ -342,6 +342,11 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
       if (!res.ok) throw new Error(json?.error || "Erreur enregistrement");
       setRecord(json.record || null);
 
+      // Flag immédiat dans localStorage pour éviter les warnings sur Vercel
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`signature_${shipmentNo}`, 'true');
+      }
+
       // Sur Vercel, attendre un peu pour que le fichier soit bien écrit avant de continuer
       if (process.env.VERCEL) {
         await new Promise(r => setTimeout(r, 500));

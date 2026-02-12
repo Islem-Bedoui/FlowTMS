@@ -243,6 +243,11 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
       if (!res.ok) throw new Error(json?.error || "Erreur enregistrement");
       setRecord(json.record || null);
 
+      // Flag immédiat dans localStorage pour éviter les warnings sur Vercel
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`returns_${shipmentNo}`, 'true');
+      }
+
       if (nextUrl) {
         router.push(nextUrl);
       }

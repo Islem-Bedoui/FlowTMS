@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
@@ -69,6 +69,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
     const norm = (s: string) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
     const driverNo = (localStorage.getItem('driverNo') || '').trim();
+
+    const hasProofKey = useCallback((set: Set<string>, orderNo: string): boolean => {
+      const no = String(orderNo || '').trim();
+      if (!no) return false;
+      // Vérifier d'abord le flag localStorage immédiat
+      if (typeof window !== 'undefined') {
+        if (localStorage.getItem(`signature_${no}`) === 'true') return true;
+        if (localStorage.getItem(`signature_WHS-${no}`) === 'true') return true;
+        if (localStorage.getItem(`returns_${no}`) === 'true') return true;
+        if (localStorage.getItem(`returns_WHS-${no}`) === 'true') return true;
+      }
+      // Ensuite, vérifier dans le set (fichiers)
+      if (set.has(no)) return true;
+      const whs = `WHS-${no}`;
+      if (set.has(whs)) return true;
+      if (no.toUpperCase().startsWith('WHS-') && set.has(no.slice(4))) return true;
+      return false;
+    }, []);
 
     const matchesLoggedDriver = (tourDriver?: string | null): boolean => {
       const isDriver = role === 'driver' || role === 'chauffeur';
