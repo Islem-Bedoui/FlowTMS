@@ -526,25 +526,61 @@ export default function RegionsPlanningPage() {
     return result;
   }, [assignments, chauffeurs, byCity]);
 
-
   // Auto-select all orders per city — tours are ready directly
   useEffect(() => {
     setAssignments(prev => {
       const next = { ...prev };
-      let changed = false;
-      byCity.forEach(([city, list]) => {
-        const allNos = list.map(o => o.No);
-        const existing = next[city]?.selectedOrders || [];
-        // Only update if selection differs
-        if (existing.length !== allNos.length || !allNos.every(no => existing.includes(no))) {
-          next[city] = { ...next[city], city, selectedOrders: allNos };
-          changed = true;
+      byCity.forEach(([city]) => {
+        const existing = next[city];
+        if (!existing) {
+          next[city] = { city, selectedOrders: [] };
         }
       });
-      if (changed) { saveAssignments(next); return next; }
-      return prev;
+      return next;
     });
-  }, [byCity]);
+  }, [byCity.length]); // Utiliser byCity.length au lieu de byCity pour éviter la boucle
+
+  // Helper function to check if vehicle is in maintenance
+  const isVehicleInMaintenance = (vehicleLabel: string): boolean => {
+    const vehicle = trucks.find(tr => {
+      const label = `${tr.No} - ${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
+      return label === vehicleLabel;
+    });
+    return vehicle?.Description?.toLowerCase().includes('maintenance') || false;
+  };
+
+  // Available vehicles by city (similar to availableDriversByCity)
+  const availableVehiclesByCity = useMemo(() => {
+    const result: Record<string, typeof trucks> = {};
+    
+    // Get all assigned vehicles with their count
+    const assignedVehicleCounts = new Map<string, number>();
+    Object.entries(assignments).forEach(([city, tour]) => {
+      if (tour.vehicle && tour.vehicle.trim()) {
+        const vehicleLabel = tour.vehicle.trim();
+        const currentCount = assignedVehicleCounts.get(vehicleLabel) || 0;
+        assignedVehicleCounts.set(vehicleLabel, currentCount + 1);
+      }
+    });
+
+    // For each city, calculate available vehicles
+    byCity.forEach(([city]) => {
+      const currentVehicle = assignments[city]?.vehicle?.trim();
+      
+      result[city] = trucks.filter(tr => {
+        const label = `${tr.No} - ${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
+        const currentCount = assignedVehicleCounts.get(label) || 0;
+        const isCurrentVehicle = label === currentVehicle;
+        const isInMaintenance = isVehicleInMaintenance(label);
+
+        // Allow if vehicle has less than 1 assignment OR is the current vehicle for this city
+        // But exclude vehicles in maintenance unless they are already assigned
+        return (currentCount < 1 || isCurrentVehicle) && (!isInMaintenance || isCurrentVehicle);
+      });
+    });
+
+    return result;
+  }, [assignments, trucks, byCity]);
 
   const validation = useMemo(() => {
     const missingDriver: string[] = [];
@@ -586,6 +622,12 @@ export default function RegionsPlanningPage() {
 
     if (selectedOrders.length !== list.length) {
       toast.error('Veuillez sélectionner toutes les expéditions (commandes) de la tournée avant de valider.');
+      return;
+    }
+
+    // Check if vehicle is in maintenance
+    if (t.vehicle && isVehicleInMaintenance(t.vehicle)) {
+      toast.error('Impossible de valider : ce camion est en maintenance. Veuillez sélectionner un autre camion.');
       return;
     }
 
@@ -958,22 +1000,25 @@ export default function RegionsPlanningPage() {
                   onChange={(e)=> setVehicle(city, e.target.value)}
                 >
                   <option value="">Sélectionner camion…</option>
-                  {(() => {
-                    const assignedVehicles = Object.entries(assignments)
-                      .filter(([c, t]) => c !== city && t.vehicle)
-                      .map(([_, t]) => t.vehicle);
-                    return trucks.filter(tr => {
-                      const label = `${tr.No} - ${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
-                      return !assignedVehicles.includes(label) || tour.vehicle === label;
-                    }).map(tr => {
-                      const label = `${tr.No} - ${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
-                      return (
-                        <option key={tr.No} value={label}>
-                          {label}
-                        </option>
-                      );
-                    });
-                  })()}
+                  {(availableVehiclesByCity[city] || trucks).map(tr => {
+                    const label = `${tr.No} - ${tr.Description || tr.No}${tr.License_Plate ? ' - ' + tr.License_Plate : ''}`;
+                    const isInMaintenance = isVehicleInMaintenance(label);
+                    const isAssigned = Object.entries(assignments).some(([c, t]) => c !== city && t.vehicle === label);
+                    
+                    return (
+                      <option 
+                        key={tr.No} 
+                        value={label}
+                        disabled={isInMaintenance && !isAssigned}
+                        style={{ 
+                          color: isInMaintenance ? '#ef4444' : isAssigned ? '#6b7280' : '#000000',
+                          fontStyle: isInMaintenance ? 'italic' : 'normal'
+                        }}
+                      >
+                        {label}{isInMaintenance ? ' (En maintenance)' : isAssigned ? ' (Déjà assigné)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 

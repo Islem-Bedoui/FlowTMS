@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
 
   useEffect(() => {
-    const storedName = localStorage.getItem("userIdentifier");
+    const storedName = localStorage.getItem("userName") || localStorage.getItem("userIdentifier");
     const storedRole = localStorage.getItem("userRole");
     setUserName(storedName);
     setUserRole(storedRole);

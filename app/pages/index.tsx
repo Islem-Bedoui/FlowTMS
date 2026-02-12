@@ -92,6 +92,28 @@ const LoginPage = () => {
         setError("");
         localStorage.setItem("userIdentifier", identifier);
         localStorage.setItem("userRole", role!);
+        
+        // Stocker le nom réel de l'utilisateur
+        if (user) {
+          const chauffeur = Array.isArray(chauffeurs)
+            ? chauffeurs.find((c: any) => {
+                const no = String(c?.No || "").trim().toLowerCase().replace(/\s+/g, "");
+                const name = String(c?.Name || "").trim().toLowerCase().replace(/\s+/g, "");
+                return no === normalizedIdentifier || name === normalizedIdentifier;
+              })
+            : null;
+          
+          if (chauffeur) {
+            localStorage.setItem("userName", chauffeur.Name || identifier);
+          } else {
+            localStorage.setItem("userName", identifier);
+          }
+        } else if (customer) {
+          localStorage.setItem("userName", customer.contact || identifier);
+        } else {
+          localStorage.setItem("userName", identifier);
+        }
+        
         if (driverNo) localStorage.setItem("driverNo", driverNo);
         else localStorage.removeItem("driverNo");
         router.push(redirectPath!);
