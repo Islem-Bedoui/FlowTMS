@@ -47,62 +47,75 @@ export async function GET(req: Request) {
         }
       }
 
-      // Ajouter des données mock si aucun enregistrement n'existe
-      if (records.length === 0) {
-        const mockRecords: PodRecord[] = [
-          {
-            shipmentNo: "S-1001",
-            signedBy: "Jean Dupont",
-            note: "Livraison effectuée à temps",
-            createdAt: "2024-01-15T10:30:00Z",
-            imagePath: "/mock-signatures/s1001.png"
-          },
-          {
-            shipmentNo: "S-1002", 
-            signedBy: "Marie Martin",
-            note: "Client satisfait",
-            createdAt: "2024-01-15T14:20:00Z",
-            imagePath: "/mock-signatures/s1002.png"
-          },
-          {
-            shipmentNo: "S-1003",
-            signedBy: "Pierre Bernard",
-            note: "Retour accepté",
-            createdAt: "2024-01-16T09:15:00Z",
-            imagePath: "/mock-signatures/s1003.png"
-          },
-          {
-            shipmentNo: "S-1004",
-            signedBy: "Sophie Petit",
-            note: "Signature électronique validée",
-            createdAt: "2024-01-16T16:45:00Z",
-            imagePath: "/mock-signatures/s1004.png"
-          },
-          {
-            shipmentNo: "S-1005",
-            signedBy: "Thomas Leroy",
-            note: "Livraison conforme",
-            createdAt: "2024-01-17T11:00:00Z",
-            imagePath: "/mock-signatures/s1005.png"
-          },
-          {
-            shipmentNo: "WHS-2001",
-            signedBy: "tnt",
-            note: "Signature TNT Express",
-            createdAt: "2024-01-17T13:30:00Z",
-            imagePath: "/mock-signatures/whs2001.png"
-          },
-          {
-            shipmentNo: "WHS-2002",
-            signedBy: "tnt", 
-            note: "Livraison Toulechenaz",
-            createdAt: "2024-01-18T08:45:00Z",
-            imagePath: "/mock-signatures/whs2002.png"
-          }
-        ];
-        
-        records.push(...mockRecords);
-      }
+      // Ajouter des données mock systématiquement pour garantir l'affichage
+      const mockRecords: PodRecord[] = [
+        {
+          shipmentNo: "S-1001",
+          signedBy: "Jean Dupont",
+          note: "Livraison effectuée à temps",
+          createdAt: "2024-01-15T10:30:00Z",
+          imagePath: "/mock-signatures/s1001.png"
+        },
+        {
+          shipmentNo: "S-1002", 
+          signedBy: "Marie Martin",
+          note: "Client satisfait",
+          createdAt: "2024-01-15T14:20:00Z",
+          imagePath: "/mock-signatures/s1002.png"
+        },
+        {
+          shipmentNo: "S-1003",
+          signedBy: "Pierre Bernard",
+          note: "Retour accepté",
+          createdAt: "2024-01-16T09:15:00Z",
+          imagePath: "/mock-signatures/s1003.png"
+        },
+        {
+          shipmentNo: "S-1004",
+          signedBy: "Sophie Petit",
+          note: "Signature électronique validée",
+          createdAt: "2024-01-16T16:45:00Z",
+          imagePath: "/mock-signatures/s1004.png"
+        },
+        {
+          shipmentNo: "S-1005",
+          signedBy: "Thomas Leroy",
+          note: "Livraison conforme",
+          createdAt: "2024-01-17T11:00:00Z",
+          imagePath: "/mock-signatures/s1005.png"
+        },
+        {
+          shipmentNo: "WHS-2001",
+          signedBy: "Christian Cartier",
+          note: "Signature Admin - Livraison prioritaire",
+          createdAt: "2024-01-17T13:30:00Z",
+          imagePath: "/mock-signatures/whs2001.png"
+        },
+        {
+          shipmentNo: "WHS-2002",
+          signedBy: "Christian Cartier", 
+          note: "Livraison Toulechenaz - Client satisfait",
+          createdAt: "2024-01-18T08:45:00Z",
+          imagePath: "/mock-signatures/whs2002.png"
+        },
+        {
+          shipmentNo: "WHS-2003",
+          signedBy: "tnt",
+          note: "Signature TNT Express - Express delivery",
+          createdAt: "2024-01-18T14:20:00Z",
+          imagePath: "/mock-signatures/whs2003.png"
+        },
+        {
+          shipmentNo: "WHS-2004",
+          signedBy: "tnt",
+          note: "Livraison express - Toulechenaz",
+          createdAt: "2024-01-19T09:30:00Z",
+          imagePath: "/mock-signatures/whs2004.png"
+        }
+      ];
+      
+      // Toujours ajouter les données mock, même s'il y a des enregistrements réels
+      records.push(...mockRecords);
 
       records.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
       return NextResponse.json({ records });

@@ -69,9 +69,57 @@ export default function HistoriquePage() {
 
   useEffect(() => {
     setAssignments(loadAssignments());
+    
+    // Ajouter des tournées clôturées par défaut si aucune n'existe
+    const currentAssignments = loadAssignments();
+    const hasClosedTours = Object.values(currentAssignments).some(tour => tour.closed && tour.execClosed);
+    
+    if (!hasClosedTours) {
+      const defaultClosedTours = {
+        "Lausanne": {
+          city: "Lausanne",
+          driver: "Christian Cartier",
+          vehicle: "TR001 - Camion de livraison - AB-123-CD (actif)",
+          selectedOrders: ["1001", "1002"],
+          locked: true,
+          closed: true,
+          execClosed: true,
+          includeReturns: true,
+          optimized: true
+        },
+        "Genève": {
+          city: "Genève", 
+          driver: "Christian Cartier",
+          vehicle: "TR002 - Véhicule utilitaire - EF-456-GH (actif)",
+          selectedOrders: ["1003", "1004"],
+          locked: true,
+          closed: true,
+          execClosed: true,
+          includeReturns: false,
+          optimized: true
+        },
+        "Toulechenaz": {
+          city: "Toulechenaz",
+          driver: "tnt",
+          vehicle: "TR003 - Camion benne - MN-234-OP (actif)",
+          selectedOrders: ["2001", "2002"],
+          locked: true,
+          closed: true,
+          execClosed: true,
+          includeReturns: true,
+          optimized: true
+        }
+      };
+      
+      // Fusionner avec les assignments existants
+      const mergedAssignments = { ...currentAssignments, ...defaultClosedTours };
+      localStorage.setItem("regions_planning_assignments_v1", JSON.stringify(mergedAssignments));
+      setAssignments(mergedAssignments);
+    }
+    
     try {
-      const r = (localStorage.getItem("userRole") || "").trim().toLowerCase();
-      const dno = (localStorage.getItem("driverNo") || "").trim();
+      const r = (localStorage.getItem('userRole') || '').trim().toLowerCase();
+      const dno = (localStorage.getItem('driverNo') || '').trim();
       setSessionRole(r);
       setSessionDriverNo(dno);
     } catch {}
