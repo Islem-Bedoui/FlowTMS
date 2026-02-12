@@ -325,28 +325,27 @@ export default function SuiviTourneesComponent() {
   const closeExecutionTour = (city: string) => {
     const tour = assignments[city];
     if (!tour) return;
-    const selectedNos = new Set(tour.selectedOrders || []);
-    const cityOrders = orders.filter(o => (o.Sell_to_City || "Autres").trim() === city && selectedNos.has(o.No));
-    const st = statuses[city] || {};
-    const includeRet = tour.includeReturns !== false;
+    const inTour = (tour.selectedOrders || []).map(no => orders.find(o => o.No === no)).filter(Boolean) as Order[];
+    if (inTour.length === 0) return;
 
-    // Check all orders are "livré"
-    const notDelivered = cityOrders.filter(o => st[o.No] !== 'livre');
-    if (notDelivered.length > 0) {
-      alert(`Impossible de clôturer : ${notDelivered.length} commande(s) non livrée(s) (${notDelivered.map(o => o.No).join(', ')})`);
+    // Vérifier que toutes les commandes sont livrées (status 'livre')
+    const allDelivered = inTour.every(o => {
+      const st = statuses[city]?.[o.No] || '';
+      return st.trim().toLowerCase() === 'livre';
+    });
+    if (!allDelivered) {
+      alert('Impossible de clôturer : toutes les commandes doivent être livrées');
       return;
     }
 
-    // Check all orders have POD signature
-    const missingPod = cityOrders.filter(o => !hasProofKey(podSet, o.No));
+    // Vérifier POD et retours si requis
+    const missingPod = inTour.filter(o => !hasProofKey(podSet, o.No));
     if (missingPod.length > 0) {
-      alert(`Impossible de clôturer : signature POD manquante pour ${missingPod.length} commande(s) (${missingPod.map(o => o.No).join(', ')})`);
+      alert(`Impossible de clôturer : POD manquants pour ${missingPod.length} commande(s) (${missingPod.map(o => o.No).join(', ')})`);
       return;
     }
-
-    // Check returns if required
-    if (includeRet) {
-      const missingRet = cityOrders.filter(o => !hasProofKey(returnsSet, o.No));
+    if (tour.includeReturns !== false) {
+      const missingRet = inTour.filter(o => !hasProofKey(returnsSet, o.No));
       if (missingRet.length > 0) {
         alert(`Impossible de clôturer : retours manquants pour ${missingRet.length} commande(s) (${missingRet.map(o => o.No).join(', ')})`);
         return;
@@ -358,6 +357,17 @@ export default function SuiviTourneesComponent() {
       const t = next[city];
       if (!t) return prev;
       next[city] = { ...t, execClosed: true };
+      saveAssignments(next);
+      return next;
+    });
+  };
+
+  const reopenExecutionTour = (city: string) => {
+    setAssignments((prev) => {
+      const next = { ...prev };
+      const t = next[city];
+      if (!t) return prev;
+      next[city] = { ...t, execClosed: false };
       saveAssignments(next);
       return next;
     });
@@ -638,6 +648,15 @@ export default function SuiviTourneesComponent() {
                       title={allOk ? 'Clôturer la tournée' : 'Impossible: livraisons/POD/signatures manquants'}
                     >
                       Clôturer la tournée
+                    </button>
+                  )}
+                  {execClosed && (
+                    <button
+                      onClick={() => reopenExecutionTour(city)}
+                      className="px-3 py-1.5 rounded-lg text-xs ring-1 bg-amber-600 text-white ring-amber-600 hover:bg-amber-500"
+                      title="Rouvrir la tournée"
+                    >
+                      Rouvrir la tournée
                     </button>
                   )}
                 </div>
