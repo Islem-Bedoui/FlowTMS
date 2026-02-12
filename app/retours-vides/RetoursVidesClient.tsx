@@ -174,14 +174,159 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
   };
 
   const scanItem = async () => {
-    // Simple mock: on mobile, allow quick entry via prompt.
-    // (Real camera barcode scanning can be added later with a dedicated component.)
-    const code = window.prompt('Scanner / saisir code article');
-    const v = String(code || '').trim();
-    if (!v) return;
-    // Remplit le champ, mais l'ajout ne sera autorisé que si l'item existe dans la liste
-    setError(null); // efface l'erreur précédente si l'utilisateur scanne à nouveau
-    setNewDefect((prev) => ({ ...prev, itemNo: v }));
+    // Try to use camera on mobile
+    try {
+      // Check if BarcodeDetector API is available
+      if ('BarcodeDetector' in window && navigator.mediaDevices?.getUserMedia) {
+        // Create a video element for scanning
+        const video = document.createElement('video');
+        video.playsInline = true;
+        video.muted = true;
+        
+        // Request camera access
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: "environment" }, 
+          audio: false 
+        });
+        
+        video.srcObject = stream;
+        await video.play();
+        
+        // Create barcode detector
+        const detector = new (window as any).BarcodeDetector({ 
+          formats: ["qr_code", "code_128", "ean_13", "ean_8", "code_39", "code_93"] 
+        });
+        
+        // Show scanning UI
+        const result = await new Promise<string>((resolve, reject) => {
+          const overlay = document.createElement('div');
+          overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+          `;
+          
+          const videoEl = document.createElement('video');
+          videoEl.style.cssText = `
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            object-fit: cover;
+            border: 2px solid #fff;
+            border-radius: 8px;
+          `;
+          videoEl.srcObject = stream;
+          videoEl.play();
+          
+          const instructions = document.createElement('div');
+          instructions.textContent = 'Pointez la caméra vers un code-barres';
+          instructions.style.cssText = `
+            margin: 20px 0;
+            text-align: center;
+            font-size: 16px;
+          `;
+          
+          const cancelBtn = document.createElement('button');
+          cancelBtn.textContent = 'Annuler';
+          cancelBtn.style.cssText = `
+            padding: 10px 20px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+          `;
+          
+          overlay.appendChild(videoEl);
+          overlay.appendChild(instructions);
+          overlay.appendChild(cancelBtn);
+          document.body.appendChild(overlay);
+          
+          cancelBtn.onclick = () => {
+            stream.getTracks().forEach(track => track.stop());
+            document.body.removeChild(overlay);
+            reject(new Error('Cancelled'));
+          };
+          
+          const detectCodes = async () => {
+            try {
+              const codes = await detector.detect(videoEl);
+              if (codes && codes.length > 0) {
+                const code = String(codes[0].rawValue || '').trim();
+                if (code) {
+                  stream.getTracks().forEach(track => track.stop());
+                  document.body.removeChild(overlay);
+                  resolve(code);
+                  return;
+                }
+              }
+              requestAnimationFrame(detectCodes);
+            } catch (e) {
+              requestAnimationFrame(detectCodes);
+            }
+          };
+          
+          detectCodes();
+        });
+        
+        setError(null);
+        setNewDefect(prev => ({ ...prev, itemNo: result }));
+        
+      } else {
+        // Fallback to file input for camera
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment';
+        
+        input.onchange = async (e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (!file) return;
+          
+          try {
+            // Try to extract barcode from image
+            const img = new Image();
+            img.onload = async () => {
+              // For now, just use filename as fallback
+              const filename = file.name.replace(/\.[^/.]+$/, '');
+              const possibleCode = filename.match(/\b\d{8,}\b/)?.[0] || filename;
+              
+              setError(null);
+              setNewDefect(prev => ({ ...prev, itemNo: possibleCode }));
+            };
+            img.src = URL.createObjectURL(file);
+          } catch (e) {
+            // Final fallback to manual input
+            const code = window.prompt('Code article non détecté. Saisir manuellement :');
+            if (code) {
+              setError(null);
+              setNewDefect(prev => ({ ...prev, itemNo: code.trim() }));
+            }
+          }
+        };
+        
+        input.click();
+      }
+    } catch (error) {
+      console.error('Camera scan failed:', error);
+      // Final fallback to manual input
+      const code = window.prompt('Scanner / saisir code article');
+      const v = String(code || '').trim();
+      if (v) {
+        setError(null);
+        setNewDefect(prev => ({ ...prev, itemNo: v }));
+      }
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -197,33 +342,154 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
         formData.append('file', file);
         formData.append('shipmentNo', shipmentNo);
 
-        const response = await fetch('/api/upload', {
+        const res = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         });
-
-        if (!response.ok) {
-          throw new Error(`Upload failed for ${file.name}`);
-        }
-
-        const result = await response.json();
+        if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+        const uploaded = await res.json();
         return {
-          id: result.id || Date.now().toString() + Math.random(),
-          url: result.url || URL.createObjectURL(file),
+          id: uploaded.id || `img-${Date.now()}-${Math.random()}`,
+          url: uploaded.url || URL.createObjectURL(file),
           name: file.name,
           uploadedAt: new Date().toISOString(),
         };
       });
 
-      const uploadedImages = await Promise.all(uploadPromises);
-      setImages((prev) => [...prev, ...uploadedImages]);
-    } catch (error: any) {
-      setError(error.message || 'Erreur lors du téléchargement des images');
+      const newImages = await Promise.all(uploadPromises);
+      setImages((prev) => [...prev, ...newImages]);
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError('Erreur lors du téléchargement des images');
     } finally {
       setUploading(false);
-      // Clear the input
-      e.target.value = '';
     }
+  };
+
+  const requestCameraAccess = async () => {
+    try {
+      // Request camera permissions first
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment" }, 
+        audio: false 
+      });
+      // Stop the stream immediately, we just wanted to get permission
+      stream.getTracks().forEach(track => track.stop());
+      return true;
+    } catch (error) {
+      console.error('Camera access denied:', error);
+      return false;
+    }
+  };
+
+  const handleCameraCapture = async () => {
+    // First try to get camera permission
+    const hasPermission = await requestCameraAccess();
+    
+    if (hasPermission) {
+      // Create a camera input that will open the camera app
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.multiple = true;
+      
+      input.onchange = async (e) => {
+        const files = Array.from((e.target as HTMLInputElement).files || []);
+        if (files.length > 0) {
+          setUploading(true);
+          setError(null);
+          
+          try {
+            const uploadPromises = files.map(async (file) => {
+              // Compress image for mobile if needed
+              const compressedFile = await compressImageIfNeeded(file);
+              
+              const formData = new FormData();
+              formData.append('file', compressedFile);
+              formData.append('shipmentNo', shipmentNo);
+
+              const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+              });
+              if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+              const uploaded = await res.json();
+              return {
+                id: uploaded.id || `img-${Date.now()}-${Math.random()}`,
+                url: uploaded.url || URL.createObjectURL(compressedFile),
+                name: file.name,
+                uploadedAt: new Date().toISOString(),
+              };
+            });
+
+            const newImages = await Promise.all(uploadPromises);
+            setImages((prev) => [...prev, ...newImages]);
+          } catch (err) {
+            console.error('Camera capture error:', err);
+            setError('Erreur lors de la capture des photos');
+          } finally {
+            setUploading(false);
+          }
+        }
+      };
+      
+      input.click();
+    } else {
+      // Fallback to regular file input
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.click();
+      }
+    }
+  };
+
+  const compressImageIfNeeded = async (file: File): Promise<File> => {
+    // Compress images larger than 2MB for mobile
+    if (file.size <= 2 * 1024 * 1024) return file;
+    
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 1200px)
+        let { width, height } = img;
+        const maxSize = 1200;
+        
+        if (width > height && width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          0.8
+        );
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
   };
 
   const removeImage = (imageId: string) => {
@@ -462,25 +728,41 @@ export default function RetoursVidesClient({ shipmentNo, nextUrl }: { shipmentNo
 
             <div className="p-3 rounded-xl border bg-white" style={{ borderColor: "rgba(79,88,165,0.14)" }}>
               <div className="mb-3">
-                <label className="xp-text inline-flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors"
-                  style={{ backgroundColor: "var(--shape-4)", color: "white" }}
-                  onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"}
-                  onMouseOut={(e) => e.currentTarget.style.opacity = "1"}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {uploading ? "Téléchargement..." : "Ajouter des images"}
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
+                <div className="flex flex-wrap gap-2">
+                  <label className="xp-text inline-flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors"
+                    style={{ backgroundColor: "var(--shape-4)", color: "white" }}
+                    onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"}
+                    onMouseOut={(e) => e.currentTarget.style.opacity = "1"}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    {uploading ? "Téléchargement..." : "Galerie"}
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploading}
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                  
+                  <button
+                    type="button"
+                    onClick={handleCameraCapture}
                     disabled={uploading}
-                    onChange={handleImageUpload}
-                  />
-                </label>
+                    className="xp-text inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
+                    onMouseOver={(e) => !uploading && (e.currentTarget.style.backgroundColor = "#10b981")}
+                    onMouseOut={(e) => !uploading && (e.currentTarget.style.backgroundColor = "#059669")}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {uploading ? "Capture..." : "Appareil photo"}
+                  </button>
+                </div>
                 <span className="xp-text ml-3 text-slate-500 text-sm">Photos des colis, emballages, défauts...</span>
               </div>
 
