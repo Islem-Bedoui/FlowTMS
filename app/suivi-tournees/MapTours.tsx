@@ -31,7 +31,7 @@ const cityCoords: Record<string, { lat: number; lng: number }> = {
   Amsterdam: { lat: 52.3676, lng: 4.9041 },
 };
 
-const startCoords = { lat: 45.7640, lng: 4.8357 }; // Lyon
+const startCoords = { lat: 46.4838, lng: 6.4756 }; // Toulechenaz - votre position par défaut
 
 export default function MapTours({ 
   tour 
@@ -74,7 +74,8 @@ export default function MapTours({
   }, [coords.lat, coords.lng]);
 
   const openUrl = useMemo(() => {
-    return `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=10/${coords.lat}/${coords.lng}`;
+    // URL pour les directions depuis votre position (Toulechenaz) vers la destination
+    return `https://www.openstreetmap.org/directions?from=${startCoords.lat},${startCoords.lng}&to=${coords.lat},${coords.lng}#map=12/${coords.lat}/${coords.lng}`;
   }, [coords.lat, coords.lng]);
 
   return (
@@ -92,7 +93,7 @@ export default function MapTours({
           {tour.city} • {tour.orders?.length || 0} commande(s)
         </div>
         <a href={openUrl} target="_blank" rel="noreferrer" className="text-sky-700 hover:underline">
-          Ouvrir
+          Directions depuis Toulechenaz
         </a>
       </div>
     </div>
