@@ -54,96 +54,152 @@ export async function GET(req: Request) {
           signedBy: "Jean Dupont",
           note: "Livraison effectuée à temps",
           createdAt: "2024-01-15T10:30:00Z",
-          imagePath: "/mock-signatures/s1001.png"
+          imagePath: `/api/signature-image?shipmentNo=S-1001`
         },
         {
           shipmentNo: "S-1002", 
           signedBy: "Marie Martin",
           note: "Client satisfait",
           createdAt: "2024-01-15T14:20:00Z",
-          imagePath: "/mock-signatures/s1002.png"
+          imagePath: `/api/signature-image?shipmentNo=S-1002`
         },
         {
           shipmentNo: "S-1003",
           signedBy: "Pierre Bernard",
           note: "Retour accepté",
           createdAt: "2024-01-16T09:15:00Z",
-          imagePath: "/mock-signatures/s1003.png"
+          imagePath: `/api/signature-image?shipmentNo=S-1003`
         },
         {
           shipmentNo: "S-1004",
           signedBy: "Sophie Petit",
           note: "Signature électronique validée",
           createdAt: "2024-01-16T16:45:00Z",
-          imagePath: "/mock-signatures/s1004.png"
+          imagePath: `/api/signature-image?shipmentNo=S-1004`
         },
         {
           shipmentNo: "S-1005",
           signedBy: "Thomas Leroy",
           note: "Livraison conforme",
           createdAt: "2024-01-17T11:00:00Z",
-          imagePath: "/mock-signatures/s1005.png"
+          imagePath: `/api/signature-image?shipmentNo=S-1005`
         },
         {
           shipmentNo: "WHS-2001",
           signedBy: "Christian Cartier",
           note: "Signature Admin - Livraison prioritaire",
           createdAt: "2024-01-17T13:30:00Z",
-          imagePath: "/mock-signatures/whs2001.png"
+          imagePath: `/api/signature-image?shipmentNo=WHS-2001`
         },
         {
           shipmentNo: "WHS-2002",
           signedBy: "Christian Cartier", 
           note: "Livraison Toulechenaz - Client satisfait",
           createdAt: "2024-01-18T08:45:00Z",
-          imagePath: "/mock-signatures/whs2002.png"
+          imagePath: `/api/signature-image?shipmentNo=WHS-2002`
         },
         {
           shipmentNo: "WHS-2003",
           signedBy: "tnt",
           note: "Signature TNT Express - Express delivery",
           createdAt: "2024-01-18T14:20:00Z",
-          imagePath: "/mock-signatures/whs2003.png"
+          imagePath: `/api/signature-image?shipmentNo=WHS-2003`
         },
         {
           shipmentNo: "WHS-2004",
           signedBy: "tnt",
           note: "Livraison express - Toulechenaz",
           createdAt: "2024-01-19T09:30:00Z",
-          imagePath: "/mock-signatures/whs2004.png"
+          imagePath: `/api/signature-image?shipmentNo=WHS-2004`
         }
       ];
       
       // Ajouter des PODs pour les tournées clôturées
       try {
-        const assignmentsData = localStorage.getItem("regions_planning_assignments_v1");
-        if (assignmentsData) {
-          const assignments = JSON.parse(assignmentsData);
-          Object.entries(assignments).forEach(([city, tour]: [string, any]) => {
-            if (tour.closed && tour.execClosed && tour.selectedOrders) {
-              tour.selectedOrders.forEach((orderNo: string, index: number) => {
-                // Vérifier si ce POD n'existe pas déjà
-                const exists = records.some(r => r.shipmentNo === orderNo);
-                if (!exists) {
-                  const driverName = tour.driver?.split(' (')[0] || 'Chauffeur';
-                  mockRecords.push({
-                    shipmentNo: orderNo,
-                    signedBy: driverName,
-                    note: `Tournée ${city} - Livraison complétée`,
-                    createdAt: new Date(Date.now() - index * 60000).toISOString(),
-                    imagePath: `/mock-signatures/${orderNo}.png`
-                  });
-                }
-              });
+        // Lire les assignments depuis le système de fichiers au lieu de localStorage
+        const assignmentsPath = path.join(process.cwd(), 'data', 'tms', 'assignments.json');
+        let assignments = {};
+        
+        try {
+          const assignmentsData = await fs.readFile(assignmentsPath, 'utf8');
+          assignments = JSON.parse(assignmentsData);
+        } catch (error) {
+          // Si le fichier n'existe pas, créer des assignments par défaut
+          assignments = {
+            "Lausanne": {
+              city: "Lausanne",
+              driver: "Christian Cartier",
+              vehicle: "TR001 - Camion de livraison - AB-123-CD (actif)",
+              selectedOrders: ["1001", "1002"],
+              locked: true,
+              closed: true,
+              execClosed: true,
+              includeReturns: true,
+              optimized: true
+            },
+            "Genève": {
+              city: "Genève", 
+              driver: "Christian Cartier",
+              vehicle: "TR002 - Véhicule utilitaire - EF-456-GH (actif)",
+              selectedOrders: ["1003", "1004"],
+              locked: true,
+              closed: true,
+              execClosed: true,
+              includeReturns: false,
+              optimized: true
+            },
+            "Toulechenaz": {
+              city: "Toulechenaz",
+              driver: "tnt",
+              vehicle: "TR003 - Camion benne - MN-234-OP (actif)",
+              selectedOrders: ["2001", "2002"],
+              locked: true,
+              closed: true,
+              execClosed: true,
+              includeReturns: true,
+              optimized: true
             }
-          });
+          };
+          
+          // Sauvegarder les assignments par défaut
+          await fs.mkdir(path.dirname(assignmentsPath), { recursive: true });
+          await fs.writeFile(assignmentsPath, JSON.stringify(assignments, null, 2));
         }
+        
+        Object.entries(assignments).forEach(([city, tour]: [string, any]) => {
+          if (tour.closed && tour.execClosed && tour.selectedOrders) {
+            tour.selectedOrders.forEach((orderNo: string, index: number) => {
+              // Vérifier si ce POD n'existe pas déjà
+              const exists = records.some(r => r.shipmentNo === orderNo);
+              if (!exists) {
+                const driverName = tour.driver?.split(' (')[0] || 'Chauffeur';
+                mockRecords.push({
+                  shipmentNo: orderNo,
+                  signedBy: driverName,
+                  note: `Tournée ${city} - Livraison complétée`,
+                  createdAt: new Date(Date.now() - index * 60000).toISOString(),
+                  imagePath: `/api/signature-image?shipmentNo=${orderNo}`
+                });
+              }
+            });
+          }
+        });
       } catch (error) {
         console.log('Erreur lors de la génération des PODs pour tournées clôturées:', error);
       }
       
       // Toujours ajouter les données mock, même s'il y a des enregistrements réels
       records.push(...mockRecords);
+      
+      // Sauvegarder les PODs générés dans des fichiers pour la persistance
+      for (const record of mockRecords) {
+        try {
+          const podPath = path.join(podsDir, `${safeFilePart(record.shipmentNo)}.json`);
+          await fs.writeFile(podPath, JSON.stringify(record, null, 2));
+        } catch (error) {
+          console.log(`Erreur lors de la sauvegarde du POD ${record.shipmentNo}:`, error);
+        }
+      }
 
       records.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
       return NextResponse.json({ records });

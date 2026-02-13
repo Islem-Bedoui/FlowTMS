@@ -613,8 +613,6 @@ export default function RegionsPlanningPage() {
 
   const validateTour = async (city: string, list: Order[]) => {
     const t = getTour(city);
-    const selectedSet = new Set(t.selectedOrders || []);
-    const selectedOrders = list.filter(o => selectedSet.has(o.No));
     
     // Validation simplifiée et plus robuste
     const hasDriver = t.driver && t.driver.trim() !== "" && t.driver !== "Sélectionner chauffeur…";
@@ -623,20 +621,11 @@ export default function RegionsPlanningPage() {
     console.log('Validation:', {
       city,
       totalOrdersInList: list.length,
-      selectedOrdersCount: selectedOrders.length,
       driver: t.driver,
       vehicle: t.vehicle,
       hasDriver,
       hasVehicle
     });
-    
-    // Si aucune commande n'est sélectionnée, les sélectionner automatiquement
-    if (selectedOrders.length === 0 && list.length > 0) {
-      console.log('Auto-sélection des commandes pour:', city);
-      selectAllCity(city, list);
-    //  toast.info('Commandes sélectionnées automatiquement');
-      return;
-    }
     
     if (!hasDriver) {
       toast.warning('Veuillez affecter un chauffeur');
@@ -646,6 +635,25 @@ export default function RegionsPlanningPage() {
     if (!hasVehicle) {
       toast.warning('Veuillez affecter un camion');
       return;
+    }
+
+    // Si aucune commande n'est sélectionnée, les sélectionner automatiquement ET valider
+    const selectedSet = new Set(t.selectedOrders || []);
+    let selectedOrders = list.filter(o => selectedSet.has(o.No));
+    
+    if (selectedOrders.length === 0 && list.length > 0) {
+      console.log('Auto-sélection et validation pour:', city);
+      // Sélectionner toutes les commandes
+      selectAllCity(city, list);
+      // Récupérer la tournée mise à jour
+      const updatedTour = getTour(city);
+      const updatedSelectedSet = new Set(updatedTour.selectedOrders || []);
+      selectedOrders = list.filter(o => updatedSelectedSet.has(o.No));
+      
+      if (selectedOrders.length === 0) {
+        toast.warning('Erreur lors de la sélection automatique des commandes');
+        return;
+      }
     }
 
     if (selectedOrders.length !== list.length) {
