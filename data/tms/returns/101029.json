@@ -1,0 +1,29 @@
+{
+  "shipmentNo": "101029",
+  "createdAt": "2026-02-13T07:05:38.405Z",
+  "updatedAt": "2026-02-13T07:05:38.405Z",
+  "values": {
+    "palettes": 6,
+    "caisses": 7,
+    "bouteilles": 12,
+    "futs": 2,
+    "autre": 1
+  },
+  "hasColis": false,
+  "hasEmballagesVides": false,
+  "defects": [
+    {
+      "itemNo": "1928-S",
+      "qty": 1,
+      "reason": "casse"
+    }
+  ],
+  "images": [
+    {
+      "id": "1770966336887_7d3iw6fr9gn",
+      "url": "/uploads/returns/101029_1770966336887_7d3iw6fr9gn.jpg",
+      "name": "seller-shipping_2.jpg",
+      "uploadedAt": "2026-02-13T07:05:36.901Z"
+    }
+  ]
+}

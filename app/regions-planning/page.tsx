@@ -615,8 +615,36 @@ export default function RegionsPlanningPage() {
     const t = getTour(city);
     const selectedSet = new Set(t.selectedOrders || []);
     const selectedOrders = list.filter(o => selectedSet.has(o.No));
-    if (selectedOrders.length === 0 || !(t.driver && t.driver.trim()) || !(t.vehicle && t.vehicle.trim())) {
-      toast.warning('Veuillez sélectionner des commandes et affecter un chauffeur + camion');
+    
+    // Validation simplifiée et plus robuste
+    const hasDriver = t.driver && t.driver.trim() !== "" && t.driver !== "Sélectionner chauffeur…";
+    const hasVehicle = t.vehicle && t.vehicle.trim() !== "" && t.vehicle !== "Sélectionner camion…";
+    
+    console.log('Validation:', {
+      city,
+      totalOrdersInList: list.length,
+      selectedOrdersCount: selectedOrders.length,
+      driver: t.driver,
+      vehicle: t.vehicle,
+      hasDriver,
+      hasVehicle
+    });
+    
+    // Si aucune commande n'est sélectionnée, les sélectionner automatiquement
+    if (selectedOrders.length === 0 && list.length > 0) {
+      console.log('Auto-sélection des commandes pour:', city);
+      selectAllCity(city, list);
+    //  toast.info('Commandes sélectionnées automatiquement');
+      return;
+    }
+    
+    if (!hasDriver) {
+      toast.warning('Veuillez affecter un chauffeur');
+      return;
+    }
+    
+    if (!hasVehicle) {
+      toast.warning('Veuillez affecter un camion');
       return;
     }
 
@@ -785,8 +813,9 @@ export default function RegionsPlanningPage() {
   };
 
   const setDriver = (city: string, driver: string) => {
-    // Check if driver is already assigned to more than 1 other city (max 2 tours per driver)
-    if (driver && driver.trim()) {
+    console.log('setDriver:', city, '->', driver);
+    
+    if (driver && driver.trim() && driver !== "Sélectionner chauffeur…") {
       const alreadyAssignedCount = Object.entries(assignments).filter(([c, t]) => 
         c !== city && t.driver && t.driver.trim() === driver.trim()
       ).length;
@@ -795,11 +824,6 @@ export default function RegionsPlanningPage() {
         alert(`Ce chauffeur est déjà assigné à ${alreadyAssignedCount} autres tournées aujourd'hui (maximum autorisé : 2)`);
         return;
       }
-      
-      // Optional: Check if cities are too far apart (you can customize this logic)
-      const alreadyAssigned = Object.entries(assignments).filter(([c, t]) => 
-        c !== city && t.driver && t.driver.trim() === driver.trim()
-      );
     }
     
     setAssignments(prev => { 
@@ -808,8 +832,14 @@ export default function RegionsPlanningPage() {
       return next; 
     });
   };
+
   const setVehicle = (city: string, vehicle: string) => {
-    setAssignments(prev => { const next = { ...prev, [city]: { ...getTour(city), vehicle } }; saveAssignments(next); return next; });
+    console.log('setVehicle:', city, '->', vehicle);
+    setAssignments(prev => { 
+      const next = { ...prev, [city]: { ...getTour(city), vehicle } }; 
+      saveAssignments(next); 
+      return next; 
+    });
   };
 
   const setIncludeReturns = (city: string, includeReturns: boolean) => {

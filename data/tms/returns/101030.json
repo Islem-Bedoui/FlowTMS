@@ -1,0 +1,16 @@
+{
+  "shipmentNo": "101030",
+  "createdAt": "2026-02-13T07:05:55.506Z",
+  "updatedAt": "2026-02-13T07:05:55.506Z",
+  "values": {
+    "palettes": 7,
+    "caisses": 8,
+    "bouteilles": 13,
+    "futs": 0,
+    "autre": 1
+  },
+  "hasColis": true,
+  "hasEmballagesVides": true,
+  "defects": [],
+  "images": []
+}
