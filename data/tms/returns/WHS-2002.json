@@ -1,0 +1,16 @@
+{
+  "shipmentNo": "WHS-2002",
+  "createdAt": "2024-01-18T08:45:00Z",
+  "updatedAt": "2024-01-18T08:45:00Z",
+  "values": {
+    "palettes": 1,
+    "caisses": 3,
+    "bouteilles": 8,
+    "futs": 0,
+    "autre": 0
+  },
+  "note": "Livraison Toulechenaz - Retour partiel",
+  "hasColis": true,
+  "hasEmballagesVides": false,
+  "defects": []
+}

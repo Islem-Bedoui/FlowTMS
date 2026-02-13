@@ -1,0 +1,22 @@
+{
+  "shipmentNo": "WHS-1002",
+  "createdAt": "2024-01-15T14:20:00Z",
+  "updatedAt": "2024-01-15T14:20:00Z",
+  "values": {
+    "palettes": 2,
+    "caisses": 8,
+    "bouteilles": 15,
+    "futs": 0,
+    "autre": 1
+  },
+  "note": "Quelques emballages endommagés",
+  "hasColis": true,
+  "hasEmballagesVides": true,
+  "defects": [
+    {
+      "itemNo": "BOX-001",
+      "qty": 2,
+      "reason": "Écrasé"
+    }
+  ]
+}

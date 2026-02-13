@@ -530,12 +530,17 @@ export default function RegionsPlanningPage() {
   useEffect(() => {
     setAssignments(prev => {
       const next = { ...prev };
-      byCity.forEach(([city]) => {
+      byCity.forEach(([city, list]) => {
         const existing = next[city];
-        if (!existing) {
-          next[city] = { city, selectedOrders: [] };
+        if (!existing || !existing.selectedOrders || existing.selectedOrders.length === 0) {
+          // Sélectionner automatiquement toutes les commandes par défaut
+          next[city] = { 
+            city, 
+            selectedOrders: list.map(o => o.No).slice(0, MAX_STOPS_PER_TOUR) 
+          };
         }
       });
+      saveAssignments(next);
       return next;
     });
   }, [byCity.length]); // Utiliser byCity.length au lieu de byCity pour éviter la boucle
@@ -637,27 +642,8 @@ export default function RegionsPlanningPage() {
       return;
     }
 
-    // Si aucune commande n'est sélectionnée, les sélectionner automatiquement ET valider
-    const selectedSet = new Set(t.selectedOrders || []);
-    let selectedOrders = list.filter(o => selectedSet.has(o.No));
-    
-    if (selectedOrders.length === 0 && list.length > 0) {
-      console.log('Auto-sélection et validation pour:', city);
-      // Sélectionner toutes les commandes
-      selectAllCity(city, list);
-      // Récupérer la tournée mise à jour
-      const updatedTour = getTour(city);
-      const updatedSelectedSet = new Set(updatedTour.selectedOrders || []);
-      selectedOrders = list.filter(o => updatedSelectedSet.has(o.No));
-      
-      if (selectedOrders.length === 0) {
-        toast.warning('Erreur lors de la sélection automatique des commandes');
-        return;
-      }
-    }
-
-    if (selectedOrders.length !== list.length) {
-      toast.error('Veuillez sélectionner toutes les expéditions (commandes) de la tournée avant de valider.');
+    if (list.length === 0) {
+      toast.warning('Aucune commande disponible pour cette tournée');
       return;
     }
 
@@ -862,6 +848,38 @@ export default function RegionsPlanningPage() {
     setAssignments(prev => {
       const next = { ...prev };
       next[city] = { ...getTour(city), selectedOrders: list.map(o => o.No).slice(0, MAX_STOPS_PER_TOUR) };
+      saveAssignments(next);
+      return next;
+    });
+  };
+
+  const selectNoneCity = (city: string) => {
+    setAssignments(prev => {
+      const next = { ...prev };
+      next[city] = { ...getTour(city), selectedOrders: [] };
+      saveAssignments(next);
+      return next;
+    });
+  };
+
+  const toggleOrderSelection = (city: string, orderNo: string, isSelected: boolean) => {
+    setAssignments(prev => {
+      const next = { ...prev };
+      const tour = getTour(city);
+      const selectedOrders = [...(tour.selectedOrders || [])];
+      
+      if (isSelected) {
+        if (!selectedOrders.includes(orderNo)) {
+          selectedOrders.push(orderNo);
+        }
+      } else {
+        const index = selectedOrders.indexOf(orderNo);
+        if (index > -1) {
+          selectedOrders.splice(index, 1);
+        }
+      }
+      
+      next[city] = { ...tour, selectedOrders };
       saveAssignments(next);
       return next;
     });
@@ -1077,8 +1095,8 @@ export default function RegionsPlanningPage() {
               <div className="border rounded-xl divide-y max-h-64 overflow-auto bg-white/60">
                 {list.map((o, idx) => (
                   <div key={o.No + '-' + idx} className="flex flex-wrap items-center gap-2 px-3 py-2 text-sm">
-                    <span className="inline-block h-2 w-2 rounded-full bg-sky-500"></span>
-                    <span className="text-slate-800 font-medium">{o.No}</span>
+                    <span className="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-slate-800 font-medium text-emerald-700">{o.No}</span>
                     <span className="text-slate-500 ml-auto text-xs">{o.Sell_to_Post_Code || ''} {o.Sell_to_City || ''}</span>
                     <span className="text-xs text-slate-500">Vol: {o.volume ?? '-'} m³</span>
                     <span className="text-xs text-slate-500">Cap: {o.capacity ?? '-'} kg</span>
@@ -1089,7 +1107,7 @@ export default function RegionsPlanningPage() {
                 )}
               </div>
               <div className="mt-2 text-xs text-slate-600">
-                {list.length} commande(s)<br />
+                {list.length} commande(s) automatiquement incluses<br />
                 {(() => {
                   const totalVolume = list.reduce((sum, o) => sum + (o.volume ?? 0), 0);
                   const totalCapacity = list.reduce((sum, o) => sum + (o.capacity ?? 0), 0);
@@ -1098,7 +1116,7 @@ export default function RegionsPlanningPage() {
                     <>
                       <span className="mr-2">Total Vol: {totalVolume} m³</span>
                       <span className="mr-2">Total Cap: {totalCapacity} kg</span>
-                      <span className="mr-2">Durée: {duration} min</span>
+                      <span className="mr-2">Durée estimée: {duration} min</span>
                     </>
                   );
                 })()}

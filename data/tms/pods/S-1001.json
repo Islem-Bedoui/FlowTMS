@@ -1,0 +1,7 @@
+{
+  "shipmentNo": "S-1001",
+  "signedBy": "Jean Dupont",
+  "note": "Livraison effectuée à temps",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "imagePath": "/api/signature-image?shipmentNo=S-1001"
+}

@@ -1,0 +1,16 @@
+{
+  "shipmentNo": "WHS-2003",
+  "createdAt": "2024-01-18T14:20:00Z",
+  "updatedAt": "2024-01-18T14:20:00Z",
+  "values": {
+    "palettes": 5,
+    "caisses": 10,
+    "bouteilles": 25,
+    "futs": 3,
+    "autre": 2
+  },
+  "note": "Signature TNT Express - Gros volume",
+  "hasColis": true,
+  "hasEmballagesVides": true,
+  "defects": []
+}

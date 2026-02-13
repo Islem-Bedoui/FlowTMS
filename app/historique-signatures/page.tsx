@@ -221,11 +221,11 @@ export default function HistoriqueSignaturesPage() {
                               Voir
                             </a>
                           ) : (
-                            "-"
+                            <span className="xp-text text-slate-400 text-xs">Non disponible</span>
                           )}
                         </td>
                         <td className="xp-text px-3 py-2">
-                          {no ? (
+                          {no && pod ? (
                             <Link
                               href={`/pod-signature?shipmentNo=${encodeURIComponent(no)}`}
                               className="xp-text inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-white"
@@ -234,7 +234,7 @@ export default function HistoriqueSignaturesPage() {
                               Ouvrir
                             </Link>
                           ) : (
-                            "-"
+                            <span className="xp-text text-slate-400 text-xs">Non disponible</span>
                           )}
                         </td>
                       </tr>

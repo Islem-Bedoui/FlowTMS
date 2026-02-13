@@ -1,0 +1,7 @@
+{
+  "shipmentNo": "1001",
+  "signedBy": "Christian Cartier",
+  "note": "Tournée Lausanne - Livraison complétée",
+  "createdAt": "2026-02-13T07:31:44.547Z",
+  "imagePath": "/api/signature-image?shipmentNo=1001"
+}

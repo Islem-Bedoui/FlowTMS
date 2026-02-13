@@ -1,0 +1,22 @@
+{
+  "shipmentNo": "1002",
+  "createdAt": "2026-02-13T07:32:28.449Z",
+  "updatedAt": "2026-02-13T07:32:28.449Z",
+  "values": {
+    "palettes": 1,
+    "caisses": 5,
+    "bouteilles": 5,
+    "futs": 0,
+    "autre": 0
+  },
+  "note": "Retour tournée Lausanne - Christian Cartier",
+  "hasColis": true,
+  "hasEmballagesVides": false,
+  "defects": [
+    {
+      "itemNo": "DEF-158",
+      "qty": 1,
+      "reason": "Légèrement endommagé"
+    }
+  ]
+}

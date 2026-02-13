@@ -1,0 +1,7 @@
+{
+  "shipmentNo": "WHS-2004",
+  "signedBy": "tnt",
+  "note": "Livraison express - Toulechenaz",
+  "createdAt": "2024-01-19T09:30:00Z",
+  "imagePath": "/api/signature-image?shipmentNo=WHS-2004"
+}

@@ -1,0 +1,16 @@
+{
+  "shipmentNo": "WHS-2001",
+  "createdAt": "2024-01-17T13:30:00Z",
+  "updatedAt": "2024-01-17T13:30:00Z",
+  "values": {
+    "palettes": 4,
+    "caisses": 6,
+    "bouteilles": 20,
+    "futs": 2,
+    "autre": 0
+  },
+  "note": "Signature Christian Cartier - Retour prioritaire",
+  "hasColis": true,
+  "hasEmballagesVides": true,
+  "defects": []
+}

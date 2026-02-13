@@ -1,0 +1,7 @@
+{
+  "shipmentNo": "S-1002",
+  "signedBy": "Marie Martin",
+  "note": "Client satisfait",
+  "createdAt": "2024-01-15T14:20:00Z",
+  "imagePath": "/api/signature-image?shipmentNo=S-1002"
+}

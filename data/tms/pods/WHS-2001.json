@@ -1,0 +1,7 @@
+{
+  "shipmentNo": "WHS-2001",
+  "signedBy": "Christian Cartier",
+  "note": "Signature Admin - Livraison prioritaire",
+  "createdAt": "2024-01-17T13:30:00Z",
+  "imagePath": "/api/signature-image?shipmentNo=WHS-2001"
+}

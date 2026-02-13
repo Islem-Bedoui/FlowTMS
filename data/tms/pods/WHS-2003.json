@@ -1,0 +1,7 @@
+{
+  "shipmentNo": "WHS-2003",
+  "signedBy": "tnt",
+  "note": "Signature TNT Express - Express delivery",
+  "createdAt": "2024-01-18T14:20:00Z",
+  "imagePath": "/api/signature-image?shipmentNo=WHS-2003"
+}

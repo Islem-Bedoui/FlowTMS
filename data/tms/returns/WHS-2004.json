@@ -1,0 +1,22 @@
+{
+  "shipmentNo": "WHS-2004",
+  "createdAt": "2024-01-19T09:30:00Z",
+  "updatedAt": "2024-01-19T09:30:00Z",
+  "values": {
+    "palettes": 2,
+    "caisses": 4,
+    "bouteilles": 10,
+    "futs": 1,
+    "autre": 0
+  },
+  "note": "Livraison express TNT - Toulechenaz",
+  "hasColis": true,
+  "hasEmballagesVides": true,
+  "defects": [
+    {
+      "itemNo": "PAL-001",
+      "qty": 1,
+      "reason": "Fissuré"
+    }
+  ]
+}

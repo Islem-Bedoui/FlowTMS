@@ -1,0 +1,7 @@
+{
+  "shipmentNo": "S-1004",
+  "signedBy": "Sophie Petit",
+  "note": "Signature électronique validée",
+  "createdAt": "2024-01-16T16:45:00Z",
+  "imagePath": "/api/signature-image?shipmentNo=S-1004"
+}

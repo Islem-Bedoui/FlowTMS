@@ -1,0 +1,16 @@
+{
+  "shipmentNo": "WHS-1001",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z",
+  "values": {
+    "palettes": 3,
+    "caisses": 5,
+    "bouteilles": 12,
+    "futs": 1,
+    "autre": 0
+  },
+  "note": "Retour en bon état",
+  "hasColis": true,
+  "hasEmballagesVides": true,
+  "defects": []
+}

@@ -1,0 +1,16 @@
+{
+  "shipmentNo": "2001",
+  "createdAt": "2026-02-13T07:33:28.449Z",
+  "updatedAt": "2026-02-13T07:33:28.449Z",
+  "values": {
+    "palettes": 3,
+    "caisses": 2,
+    "bouteilles": 8,
+    "futs": 1,
+    "autre": 0
+  },
+  "note": "Retour tournée Toulechenaz - tnt",
+  "hasColis": true,
+  "hasEmballagesVides": true,
+  "defects": []
+}

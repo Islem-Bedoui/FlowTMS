@@ -1,0 +1,7 @@
+{
+  "shipmentNo": "S-1005",
+  "signedBy": "Thomas Leroy",
+  "note": "Livraison conforme",
+  "createdAt": "2024-01-17T11:00:00Z",
+  "imagePath": "/api/signature-image?shipmentNo=S-1005"
+}
