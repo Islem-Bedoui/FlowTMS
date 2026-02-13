@@ -114,6 +114,34 @@ export async function GET(req: Request) {
         }
       ];
       
+      // Ajouter des PODs pour les tournées clôturées
+      try {
+        const assignmentsData = localStorage.getItem("regions_planning_assignments_v1");
+        if (assignmentsData) {
+          const assignments = JSON.parse(assignmentsData);
+          Object.entries(assignments).forEach(([city, tour]: [string, any]) => {
+            if (tour.closed && tour.execClosed && tour.selectedOrders) {
+              tour.selectedOrders.forEach((orderNo: string, index: number) => {
+                // Vérifier si ce POD n'existe pas déjà
+                const exists = records.some(r => r.shipmentNo === orderNo);
+                if (!exists) {
+                  const driverName = tour.driver?.split(' (')[0] || 'Chauffeur';
+                  mockRecords.push({
+                    shipmentNo: orderNo,
+                    signedBy: driverName,
+                    note: `Tournée ${city} - Livraison complétée`,
+                    createdAt: new Date(Date.now() - index * 60000).toISOString(),
+                    imagePath: `/mock-signatures/${orderNo}.png`
+                  });
+                }
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Erreur lors de la génération des PODs pour tournées clôturées:', error);
+      }
+      
       // Toujours ajouter les données mock, même s'il y a des enregistrements réels
       records.push(...mockRecords);
 
@@ -127,8 +155,10 @@ export async function GET(req: Request) {
       const raw = await fs.readFile(metaPath, "utf8");
       const record = JSON.parse(raw) as PodRecord;
       return NextResponse.json({ record });
-    } catch {
-      return NextResponse.json({ record: null });
+    } catch (error) {
+      // Si le fichier n'existe pas, retourner null au lieu d'une erreur
+      console.log(`POD record not found for shipment: ${shipmentNo}`);
+      return NextResponse.json({ record: null, message: "POD record not found" });
     }
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Failed to read POD" }, { status: 500 });

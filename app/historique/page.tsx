@@ -196,11 +196,10 @@ export default function HistoriquePage() {
   const closedTours = useMemo(() => {
     const list = Object.values(assignments || {})
       .filter((t) => t && t.closed && t.execClosed)
-      .filter((t) => matchesLoggedDriver(t.driver))
-      .filter((t) => (t.selectedOrders || []).some((no) => isMockShipmentNo(no)));
+      .filter((t) => matchesLoggedDriver(t.driver));
     list.sort((a, b) => String(a.city || "").localeCompare(String(b.city || "")));
     return list;
-  }, [assignments, mockNoSet, sessionRole, sessionDriverNo]);
+  }, [assignments, sessionRole, sessionDriverNo]);
 
   const filteredTours = useMemo(() => {
     const q = query.trim().toLowerCase();

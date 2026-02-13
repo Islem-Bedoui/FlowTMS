@@ -195,6 +195,47 @@ export async function GET(req: Request) {
         }
       ];
       
+      // Ajouter des retours pour les tournées clôturées
+      try {
+        const assignmentsData = localStorage.getItem("regions_planning_assignments_v1");
+        if (assignmentsData) {
+          const assignments = JSON.parse(assignmentsData);
+          Object.entries(assignments).forEach(([city, tour]: [string, any]) => {
+            if (tour.closed && tour.execClosed && tour.includeReturns && tour.selectedOrders) {
+              tour.selectedOrders.forEach((orderNo: string, index: number) => {
+                // Vérifier si ce retour n'existe pas déjà
+                const exists = records.some(r => r.shipmentNo === orderNo);
+                if (!exists) {
+                  const driverName = tour.driver?.split(' (')[0] || 'Chauffeur';
+                  mockReturns.push({
+                    shipmentNo: orderNo,
+                    createdAt: new Date(Date.now() - index * 60000).toISOString(),
+                    updatedAt: new Date(Date.now() - index * 60000).toISOString(),
+                    values: {
+                      palettes: Math.floor(Math.random() * 3) + 1,
+                      caisses: Math.floor(Math.random() * 8) + 2,
+                      bouteilles: Math.floor(Math.random() * 20) + 5,
+                      futs: Math.floor(Math.random() * 2),
+                      autre: Math.floor(Math.random() * 2)
+                    },
+                    note: `Retour tournée ${city} - ${driverName}`,
+                    hasColis: true,
+                    hasEmballagesVides: Math.random() > 0.3,
+                    defects: Math.random() > 0.7 ? [{
+                      itemNo: `DEF-${Math.floor(Math.random() * 1000)}`,
+                      qty: 1,
+                      reason: "Légèrement endommagé"
+                    }] : []
+                  });
+                }
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Erreur lors de la génération des retours pour tournées clôturées:', error);
+      }
+      
       // Toujours ajouter les données mock, même s'il y a des enregistrements réels
       records.push(...mockReturns);
 

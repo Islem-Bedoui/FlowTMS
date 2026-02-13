@@ -131,11 +131,21 @@ export default function PodSignatureClient({ shipmentNo, nextUrl, skipReturns }:
       try {
         const res = await fetch(`/api/pod?shipmentNo=${encodeURIComponent(shipmentNo)}`, { cache: "no-store" });
         const json = await res.json();
+        
         if (!cancelled) {
-          const rec = (json.record || null) as PodRecord | null;
-          setRecord(rec);
-          if (rec?.signedBy) setSignedBy(rec.signedBy);
-          if (rec?.note) setNote(rec.note);
+          // Gérer le cas où le POD n'existe pas
+          if (json.error === "POD record not found" || json.record === null) {
+            // Le POD n'existe pas, mais ce n'est pas une erreur
+            // L'utilisateur peut créer une nouvelle signature
+            setRecord(null);
+            setError(null);
+          } else {
+            // Le POD existe, charger ses données
+            const rec = (json.record || null) as PodRecord | null;
+            setRecord(rec);
+            if (rec?.signedBy) setSignedBy(rec.signedBy);
+            if (rec?.note) setNote(rec.note);
+          }
         }
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "Erreur de chargement");
