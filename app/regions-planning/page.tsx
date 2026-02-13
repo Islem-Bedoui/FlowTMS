@@ -684,8 +684,9 @@ export default function RegionsPlanningPage() {
       const serviceMin = 20;
       let cursor = startMin;
       const plans: StopPlan[] = [];
-      for (let i = 0; i < (t.selectedOrders || []).length; i++) {
-        const no = t.selectedOrders[i];
+      // Utiliser toutes les commandes de la liste au lieu de selectedOrders
+      for (let i = 0; i < list.length; i++) {
+        const no = list[i].No;
         const tw = buildMockTimeWindow(no);
         if (i === 0) cursor = Math.max(cursor, hhmmToMinutes(tw.start));
         else cursor += travelMin;
@@ -714,13 +715,14 @@ export default function RegionsPlanningPage() {
       return next;
     });
 
-    // Auto-set all selected orders to "en_cours" in suivi-tournees statuses
+    // Auto-set all orders to "en_cours" in suivi-tournees statuses
     try {
       const statusKey = 'regions_planning_status_v1';
       const rawSt = localStorage.getItem(statusKey) || '{}';
       const allStatuses: Record<string, Record<string, string>> = JSON.parse(rawSt);
       if (!allStatuses[city]) allStatuses[city] = {};
-      selectedOrders.forEach((o) => {
+      // Utiliser toutes les commandes de la liste
+      list.forEach((o:any) => {
         allStatuses[city][o.No] = 'en_cours';
       });
       localStorage.setItem(statusKey, JSON.stringify(allStatuses));
@@ -731,7 +733,8 @@ export default function RegionsPlanningPage() {
       const key = 'whse_shipment_status_v1';
       const raw = localStorage.getItem(key) || '{}';
       const statusBy: Record<string, string> = JSON.parse(raw);
-      selectedOrders.forEach((o) => {
+      // Utiliser toutes les commandes de la liste
+      list.forEach((o) => {
         statusBy[o.No] = 'Validated';
       });
       localStorage.setItem(key, JSON.stringify(statusBy));
@@ -739,7 +742,7 @@ export default function RegionsPlanningPage() {
     }
 
     await Promise.all(
-      selectedOrders.map((o) =>
+      list.map((o) =>
         fetch('/api/whseShipments/status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
