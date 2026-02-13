@@ -85,6 +85,41 @@ export async function GET(req: Request) {
           imagePath: `/api/signature-image?shipmentNo=S-1005`
         },
         {
+          shipmentNo: "S-1006",
+          signedBy: "Isabelle Moreau",
+          note: "Colis endommagé signalé",
+          createdAt: "2024-01-17T15:30:00Z",
+          imagePath: `/api/signature-image?shipmentNo=S-1006`
+        },
+        {
+          shipmentNo: "S-1007",
+          signedBy: "François Dubois",
+          note: "Livraison express",
+          createdAt: "2024-01-18T08:45:00Z",
+          imagePath: `/api/signature-image?shipmentNo=S-1007`
+        },
+        {
+          shipmentNo: "S-1008",
+          signedBy: "Camille Bernard",
+          note: "Client absent - Dépôt gardien",
+          createdAt: "2024-01-18T13:20:00Z",
+          imagePath: `/api/signature-image?shipmentNo=S-1008`
+        },
+        {
+          shipmentNo: "S-1009",
+          signedBy: "Nicolas Petit",
+          note: "Livraison en altitude",
+          createdAt: "2024-01-19T09:10:00Z",
+          imagePath: `/api/signature-image?shipmentNo=S-1009`
+        },
+        {
+          shipmentNo: "S-1010",
+          signedBy: "Émilie Rousseau",
+          note: "Signature tablette",
+          createdAt: "2024-01-19T14:55:00Z",
+          imagePath: `/api/signature-image?shipmentNo=S-1010`
+        },
+        {
           shipmentNo: "WHS-2001",
           signedBy: "Christian Cartier",
           note: "Signature Admin - Livraison prioritaire",
@@ -111,6 +146,48 @@ export async function GET(req: Request) {
           note: "Livraison express - Toulechenaz",
           createdAt: "2024-01-19T09:30:00Z",
           imagePath: `/api/signature-image?shipmentNo=WHS-2004`
+        },
+        {
+          shipmentNo: "WHS-2005",
+          signedBy: "Christian Cartier",
+          note: "Livraison urgente - Matériel médical",
+          createdAt: "2024-01-19T16:15:00Z",
+          imagePath: `/api/signature-image?shipmentNo=WHS-2005`
+        },
+        {
+          shipmentNo: "WHS-2006",
+          signedBy: "tnt",
+          note: "Colis fragile - Manipulation spéciale",
+          createdAt: "2024-01-20T10:00:00Z",
+          imagePath: `/api/signature-image?shipmentNo=WHS-2006`
+        },
+        {
+          shipmentNo: "WHS-2007",
+          signedBy: "Christian Cartier",
+          note: "Livraison zone industrielle - Grande quantité",
+          createdAt: "2024-01-20T13:45:00Z",
+          imagePath: `/api/signature-image?shipmentNo=WHS-2007`
+        },
+        {
+          shipmentNo: "WHS-2008",
+          signedBy: "tnt",
+          note: "Signature mobile - Application chauffeur",
+          createdAt: "2024-01-21T08:30:00Z",
+          imagePath: `/api/signature-image?shipmentNo=WHS-2008`
+        },
+        {
+          shipmentNo: "WHS-2009",
+          signedBy: "Christian Cartier",
+          note: "Retour palette - Réexpédition prévue",
+          createdAt: "2024-01-21T11:20:00Z",
+          imagePath: `/api/signature-image?shipmentNo=WHS-2009`
+        },
+        {
+          shipmentNo: "WHS-2010",
+          signedBy: "tnt",
+          note: "Livraison nocturne - Service 24/7",
+          createdAt: "2024-01-21T22:45:00Z",
+          imagePath: `/api/signature-image?shipmentNo=WHS-2010`
         }
       ];
       

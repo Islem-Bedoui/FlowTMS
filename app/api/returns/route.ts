@@ -128,6 +128,139 @@ export async function GET(req: Request) {
           ]
         },
         {
+          shipmentNo: "WHS-1003",
+          createdAt: "2024-01-16T09:15:00Z",
+          updatedAt: "2024-01-16T09:15:00Z",
+          values: {
+            palettes: 1,
+            caisses: 3,
+            bouteilles: 8,
+            futs: 0,
+            autre: 0
+          },
+          note: "Retour partiel - Client conserve quelques articles",
+          hasColis: true,
+          hasEmballagesVides: false,
+          defects: []
+        },
+        {
+          shipmentNo: "WHS-1004",
+          createdAt: "2024-01-16T16:45:00Z",
+          updatedAt: "2024-01-16T16:45:00Z",
+          values: {
+            palettes: 4,
+            caisses: 6,
+            bouteilles: 20,
+            futs: 2,
+            autre: 0
+          },
+          note: "Gros volume de retours",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: []
+        },
+        {
+          shipmentNo: "WHS-1005",
+          createdAt: "2024-01-17T11:00:00Z",
+          updatedAt: "2024-01-17T11:00:00Z",
+          values: {
+            palettes: 2,
+            caisses: 4,
+            bouteilles: 10,
+            futs: 1,
+            autre: 0
+          },
+          note: "Retour produits chimiques - Manipulation spéciale",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: [
+            { itemNo: "CHEM-001", qty: 1, reason: "Fuite légère" }
+          ]
+        },
+        {
+          shipmentNo: "WHS-1006",
+          createdAt: "2024-01-17T15:30:00Z",
+          updatedAt: "2024-01-17T15:30:00Z",
+          values: {
+            palettes: 0,
+            caisses: 2,
+            bouteilles: 6,
+            futs: 0,
+            autre: 3
+          },
+          note: "Retour emballages uniquement",
+          hasColis: false,
+          hasEmballagesVides: true,
+          defects: []
+        },
+        {
+          shipmentNo: "WHS-1007",
+          createdAt: "2024-01-18T08:45:00Z",
+          updatedAt: "2024-01-18T08:45:00Z",
+          values: {
+            palettes: 3,
+            caisses: 7,
+            bouteilles: 18,
+            futs: 1,
+            autre: 0
+          },
+          note: "Retour alimentaire - Chaîne du froid respectée",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: []
+        },
+        {
+          shipmentNo: "WHS-1008",
+          createdAt: "2024-01-18T13:20:00Z",
+          updatedAt: "2024-01-18T13:20:00Z",
+          values: {
+            palettes: 1,
+            caisses: 2,
+            bouteilles: 4,
+            futs: 0,
+            autre: 0
+          },
+          note: "Retour échantillons - Petite quantité",
+          hasColis: true,
+          hasEmballagesVides: false,
+          defects: []
+        },
+        {
+          shipmentNo: "WHS-1009",
+          createdAt: "2024-01-19T09:10:00Z",
+          updatedAt: "2024-01-19T09:10:00Z",
+          values: {
+            palettes: 5,
+            caisses: 12,
+            bouteilles: 25,
+            futs: 3,
+            autre: 2
+          },
+          note: "Très gros volume - Nécessite grand camion",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: [
+            { itemNo: "PAL-002", qty: 1, reason: "Bord fissuré" },
+            { itemNo: "CAISSE-005", qty: 3, reason: "Déchirure" }
+          ]
+        },
+        {
+          shipmentNo: "WHS-1010",
+          createdAt: "2024-01-19T14:55:00Z",
+          updatedAt: "2024-01-19T14:55:00Z",
+          values: {
+            palettes: 2,
+            caisses: 5,
+            bouteilles: 12,
+            futs: 0,
+            autre: 1
+          },
+          note: "Retour matériel médical - Stérilisation requise",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: []
+        },
+        {
           shipmentNo: "WHS-2001",
           createdAt: "2024-01-17T13:30:00Z",
           updatedAt: "2024-01-17T13:30:00Z",
@@ -192,6 +325,108 @@ export async function GET(req: Request) {
           defects: [
             { itemNo: "PAL-001", qty: 1, reason: "Fissuré" }
           ]
+        },
+        {
+          shipmentNo: "WHS-2005",
+          createdAt: "2024-01-19T16:15:00Z",
+          updatedAt: "2024-01-19T16:15:00Z",
+          values: {
+            palettes: 3,
+            caisses: 8,
+            bouteilles: 15,
+            futs: 2,
+            autre: 1
+          },
+          note: "Christian Cartier - Retour matériel médical",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: [
+            { itemNo: "MED-001", qty: 1, reason: "Emballage abîmé" }
+          ]
+        },
+        {
+          shipmentNo: "WHS-2006",
+          createdAt: "2024-01-20T10:00:00Z",
+          updatedAt: "2024-01-20T10:00:00Z",
+          values: {
+            palettes: 2,
+            caisses: 6,
+            bouteilles: 12,
+            futs: 1,
+            autre: 0
+          },
+          note: "tnt - Colis fragiles",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: [
+            { itemNo: "FRAG-001", qty: 2, reason: "Coins écrasés" }
+          ]
+        },
+        {
+          shipmentNo: "WHS-2007",
+          createdAt: "2024-01-20T13:45:00Z",
+          updatedAt: "2024-01-20T13:45:00Z",
+          values: {
+            palettes: 6,
+            caisses: 15,
+            bouteilles: 30,
+            futs: 4,
+            autre: 3
+          },
+          note: "Christian Cartier - Zone industrielle - Très gros volume",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: []
+        },
+        {
+          shipmentNo: "WHS-2008",
+          createdAt: "2024-01-21T08:30:00Z",
+          updatedAt: "2024-01-21T08:30:00Z",
+          values: {
+            palettes: 1,
+            caisses: 2,
+            bouteilles: 5,
+            futs: 0,
+            autre: 0
+          },
+          note: "tnt - Signature mobile",
+          hasColis: true,
+          hasEmballagesVides: false,
+          defects: []
+        },
+        {
+          shipmentNo: "WHS-2009",
+          createdAt: "2024-01-21T11:20:00Z",
+          updatedAt: "2024-01-21T11:20:00Z",
+          values: {
+            palettes: 4,
+            caisses: 8,
+            bouteilles: 18,
+            futs: 2,
+            autre: 1
+          },
+          note: "Christian Cartier - Retour palette pour réexpédition",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: [
+            { itemNo: "PAL-003", qty: 1, reason: "Humidité" }
+          ]
+        },
+        {
+          shipmentNo: "WHS-2010",
+          createdAt: "2024-01-21T22:45:00Z",
+          updatedAt: "2024-01-21T22:45:00Z",
+          values: {
+            palettes: 2,
+            caisses: 4,
+            bouteilles: 10,
+            futs: 1,
+            autre: 0
+          },
+          note: "tnt - Livraison nocturne service 24/7",
+          hasColis: true,
+          hasEmballagesVides: true,
+          defects: []
         }
       ];
       
